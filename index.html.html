@@ -1,0 +1,2445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marco3D — Análisis matricial de marcos tridimensionales</title>
+<style>:root{--ink:#1f2a36;--muted:#5f6f7f;--line:#d5dce3;--bg:#f4f6f8;--panel:#fff;--acc:#1f5fa8;--acc2:#e8f0fa;--ok:#1e8449;--bad:#c0392b;--warn:#b9770e}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:13px;color:var(--ink);background:var(--bg)}
+#app{display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+header{display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(--ink);color:#fff}
+header .brand{font-weight:700;font-size:16px;letter-spacing:.2px}
+header .sub{color:#b8c4d0;font-size:12px}
+header .sp{flex:1}
+button,.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);padding:5px 10px;border-radius:5px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+header button{background:#2c3b4b;color:#fff;border-color:#3d4f62}
+header button:hover{background:#3a4c60}
+header button.pri{background:#2f7bd1;border-color:#2f7bd1}
+#main{display:grid;grid-template-columns:430px minmax(0,1fr);min-height:0}
+#side{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line);background:var(--panel)}
+.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);background:#fafbfc}
+.tabs button{border:none;border-radius:0;background:transparent;padding:8px 11px;color:var(--muted);border-bottom:2px solid transparent}
+.tabs button.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+.pane{overflow:auto;padding:10px;flex:1;min-height:0}
+.pane h3{margin:12px 0 6px;font-size:13px}
+.pane h3:first-child{margin-top:0}
+.hint{color:var(--muted);font-size:12px;margin:4px 0 8px;line-height:1.4}
+table.ed{border-collapse:collapse;width:100%}
+table.ed th{background:#eef2f6;font-weight:600;font-size:11.5px;padding:4px 3px;border:1px solid var(--line);position:sticky;top:0;z-index:1}
+table.ed td{border:1px solid var(--line);padding:1px}
+table.ed input[type=text],table.ed input[type=number],table.ed select{width:100%;border:none;padding:4px 3px;font:inherit;background:transparent;min-width:0}
+table.ed input:focus,table.ed select:focus{outline:2px solid var(--acc2);background:#fffdf0}
+table.ed td.c{text-align:center}
+table.ed td.ro{background:#f7f9fb;color:var(--muted);text-align:right;padding:3px 5px;font-variant-numeric:tabular-nums}
+.del{border:none;background:none;color:#b0b8c0;cursor:pointer;padding:2px 6px}
+.del:hover{color:var(--bad)}
+.row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.form label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px}
+.form input{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:4px}
+#center{display:grid;grid-template-rows:auto 1fr auto;min-height:0;min-width:0}
+#vtool{display:flex;gap:6px;align-items:center;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+#vtool select,#vtool input{font:inherit}
+#vtool .grp{display:flex;gap:2px}
+#vtool .grp button{padding:4px 8px}
+#vtool label{display:flex;align-items:center;gap:3px;color:var(--muted)}
+#viewer{position:relative;min-height:0;background:linear-gradient(#fdfefe,#eef2f5)}
+#cv{position:absolute;inset:0;width:100%;height:100%;cursor:grab}
+#legend{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:4px;pointer-events:none}
+#tip{position:absolute;pointer-events:none;background:rgba(31,42,54,.92);color:#fff;padding:5px 8px;border-radius:4px;font-size:11.5px;display:none;white-space:pre}
+#results{height:36vh;min-height:150px;display:flex;flex-direction:column;border-top:1px solid var(--line);background:var(--panel)}
+#results .pane{padding:8px 10px}
+table.rs{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:12px;margin:4px 0 10px}
+table.rs th{background:#eef2f6;border:1px solid var(--line);padding:3px 7px;font-weight:600;white-space:nowrap}
+table.rs td{border:1px solid var(--line);padding:2px 7px;text-align:right;white-space:nowrap}
+table.rs td.l{text-align:left;font-weight:600;background:#fafbfc}
+table.rs.mat td{padding:1px 5px;font-size:11px}
+table.rs tr.hl td{background:#fff8e1}
+.badge{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11.5px;font-weight:600}
+.badge.ok{background:#e3f4ea;color:var(--ok)}.badge.bad{background:#fbe5e2;color:var(--bad)}
+footer{display:flex;gap:16px;align-items:center;padding:4px 12px;font-size:12px;background:#fafbfc;border-top:1px solid var(--line);color:var(--muted)}
+footer .err{color:var(--bad);font-weight:600}
+footer .okm{color:var(--ok);font-weight:600}
+.cards{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.card{border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:170px;background:#fbfcfd}
+.card .k{font-size:11px;color:var(--muted)}.card .v{font-size:15px;font-weight:600}
+.mono{font-family:Consolas,"Courier New",monospace}
+sub,sup{font-size:75%}
+
+/* pantallas angostas, móviles o incrustado en un contenedor estrecho (p. ej. Google Sites) */
+@media (max-width: 900px){
+  html,body{height:auto}
+  #app{height:auto;min-height:100vh}
+  header{flex-wrap:wrap;gap:6px}
+  header .sp{display:none}
+  header button{padding:4px 8px;font-size:12px}
+  #main{grid-template-columns:minmax(0,1fr)}
+  #side,#center,#results,#vtool{min-width:0;max-width:100vw}
+  #side{border-right:none;border-bottom:1px solid var(--line);max-height:55vh}
+  #center{grid-template-rows:auto 60vh auto}
+  #results{height:auto;max-height:70vh}
+  table.ed input[type=text]{min-width:42px}
+}
+
+.pagnav{gap:6px;font-size:12px;color:var(--muted)}
+.pagnav .buscar{font:inherit;padding:3px 6px;border:1px solid var(--line);border-radius:4px;width:130px}
+.pagnav button{padding:2px 9px}
+#sVer{max-width:230px}
+
+#resTabs{align-items:center}
+#resTabs button.ampliar{border:1px solid var(--line);border-radius:5px;margin:3px 8px;padding:3px 9px;color:var(--ink);font-size:12px}
+#results.amplio{height:78vh}
+
+table.ed select.lib { min-width: 70px; padding: 4px 0 4px 2px; font-size: 11px; letter-spacing: -0.2px; }
+table.ed input[list] { min-width: 34px; }
+
+details{border:1px solid var(--line);border-radius:6px;padding:4px 8px;margin:8px 0;background:#fff}
+details>summary{cursor:pointer;font-weight:600;padding:4px 0;color:var(--acc,#1f4e79)}
+details[open]>summary{margin-bottom:4px}
+.form label.ancho{grid-column:1/-1}
+.form textarea,textarea.pegtxt{font:12px ui-monospace,Consolas,monospace;padding:4px 6px;border:1px solid var(--line);border-radius:4px;resize:vertical;width:100%;box-sizing:border-box}
+.form select{font:inherit;padding:3px 4px;border:1px solid var(--line);border-radius:4px}
+.form label.chk{flex-direction:row;align-items:center;gap:6px;color:var(--fg,#1f2a36)}
+details.pegar{margin-top:6px}
+.form label{min-width:0}
+.form input,.form select,.form textarea{min-width:0;width:100%;box-sizing:border-box}
+.form input[type=checkbox]{width:auto}
+
+.menu{position:relative}
+.menulist{position:absolute;right:0;top:calc(100% + 4px);background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.18);z-index:30;min-width:270px;padding:4px 0}
+.menulist button{display:block;width:100%;text-align:left;border:none;background:none;padding:7px 12px;border-radius:0;color:var(--ink);font:inherit}
+.menulist button:hover{background:#eef2f6}
+.menulist .sep{border-top:1px solid var(--line);margin:4px 0}
+.menulist .hint{padding:2px 12px 4px;font-size:11px}
+#badge{position:absolute;top:8px;left:10px;z-index:5;background:#fff4d6;color:#7a5200;border:1px solid #e5c56b;border-radius:14px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+#modal{position:fixed;inset:0;background:rgba(20,30,40,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+#modal[hidden]{display:none}
+#modal .caja{background:#fff;border-radius:10px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px;box-shadow:0 12px 40px rgba(0,0,0,.3);font-size:13.5px;line-height:1.45}
+#modal h2{margin:0 0 4px;font-size:19px}
+#modal .etq{display:inline-block;background:#fff4d6;color:#7a5200;border:1px solid #e5c56b;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:600;margin-bottom:8px}
+#modal h4{margin:12px 0 4px;font-size:13.5px;color:var(--ink)}
+#modal ul{margin:2px 0 4px 18px;padding:0}
+#modal li{margin:2px 0}
+#modal .sup{background:#f7f9fb;border-left:3px solid #e5c56b;padding:6px 10px;margin:8px 0}
+#modal .pie{font-size:12px;color:var(--muted);margin-top:10px}
+#modal .acciones{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+#modal label.ok{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-weight:600}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div><div class="brand">Marco3D</div><div class="sub">Análisis matricial de marcos 3D · matriz de continuidad (J. Damy)</div></div>
+    <div class="sp"></div>
+    <button id="bTarea" title="Cargar el ejercicio de la tarea">Ejercicio de la tarea</button>
+    <div class="menu"><button id="bEjemplos" title="Edificios idealizados como marcos 3D">Ejemplos ▾</button><div id="mEjemplos" class="menulist" hidden></div></div>
+    <button id="bAbrir">Abrir…</button>
+    <button id="bGuardar">Guardar modelo</button>
+    <button id="bS2K" title="Exportar a SAP2000 (.s2k)">Exportar a SAP2000</button>
+    <button id="bCSV">Resultados CSV</button>
+    <input type="file" id="fAbrir" accept=".json,application/json" hidden>
+    <input type="file" id="fSAP" accept=".xlsx,.csv,.txt,.s2k,.$2k" multiple hidden>
+  </header>
+  <div id="main">
+    <aside id="side">
+      <div class="tabs" id="sideTabs">
+        <button data-p="pNudos" class="on">Nudos</button><button data-p="pBarras">Barras</button><button data-p="pSecc">Secciones</button><button data-p="pCargas">Cargas</button><button data-p="pPlant">Generar</button>
+      </div>
+      <div class="pane" id="pNudos"></div>
+      <div class="pane" id="pBarras" hidden></div>
+      <div class="pane" id="pSecc" hidden></div>
+      <div class="pane" id="pCargas" hidden></div>
+      <div class="pane" id="pPlant" hidden></div>
+    </aside>
+    <section id="center">
+      <div id="vtool">
+        <div class="grp"><button data-v="3d">3D</button><button data-v="xz">XZ</button><button data-v="yz">YZ</button><button data-v="xy">Planta</button></div>
+        <label>Ver <select id="sVer"><option value="todo">Todo el modelo</option></select></label>
+        <label>Mostrar <select id="sMostrar">
+          <option value="modelo">Modelo</option><option value="def">Deformada</option>
+          <option value="N">Normal N</option><option value="Vy">Cortante Vy'</option><option value="Vz">Cortante Vz'</option>
+          <option value="T">Torsión T</option><option value="My">Momento My'</option><option value="Mz">Momento Mz'</option><option value="dif">Diferencia con SAP2000</option></select></label>
+        <label>Escala <input type="range" id="rEsc" min="0.2" max="4" step="0.1" value="1" style="width:90px"></label>
+        <label><input type="checkbox" id="cEtiq" checked>Etiquetas</label>
+        <label><input type="checkbox" id="cEjes">Ejes locales</label>
+        <label><input type="checkbox" id="cCargas" checked>Cargas</label>
+        <label><input type="checkbox" id="cValores" checked>Valores</label>
+      </div>
+      <div id="viewer"><canvas id="cv"></canvas><button id="badge" hidden></button><div id="legend"></div><div id="tip"></div></div>
+      <div id="results">
+        <div class="tabs" id="resTabs">
+          <button data-p="rRes" class="on">Resumen</button><button data-p="rDesp">Desplazamientos</button><button data-p="rReac">Reacciones</button><button data-p="rFzas">Fuerzas en barras</button><button data-p="rPaso">Paso a paso</button><button data-p="rSAP">Comprobación SAP2000</button><span style="flex:1"></span><button id="bAmpliar" class="ampliar" title="Ampliar o reducir el panel de resultados">⤢ Ampliar</button>
+        </div>
+        <div class="pane" id="rRes"></div><div class="pane" id="rDesp" hidden></div><div class="pane" id="rReac" hidden></div>
+        <div class="pane" id="rFzas" hidden></div><div class="pane" id="rPaso" hidden></div><div class="pane" id="rSAP" hidden></div>
+      </div>
+    </section>
+  </div>
+  <footer><span id="stMsg">Listo</span><span id="stInfo"></span><span style="flex:1"></span><span>Unidades: t, m · E y G en t/m²</span></footer>
+</div>
+<div id="modal" hidden><div class="caja" role="dialog" aria-modal="true"></div></div>
+<script>/*  Marco3D — núcleo de cálculo
+    Método de la matriz de continuidad con la ley de Hooke de J. Damy ([k] diagonal 8x8)
+    y comprobación independiente por rigidez directa (12x12 + transformación).
+    Notación de los apuntes del M.I. Octavio García Domínguez (DEPFI, UNAM).
+    Este módulo no depende de la interfaz: se puede usar en el navegador o en Node. */
+(function (root) {
+  "use strict";
+  const Core = {};
+
+  // ---------- álgebra básica ----------
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+  const scl = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const norm = (a) => Math.hypot(a[0], a[1], a[2]);
+  const zeros = (n, m) => Array.from({ length: n }, () => new Array(m).fill(0));
+  Core.vec = { sub, add, scl, dot, cross, norm };
+
+  // ---------- ejes locales (regla del nudo auxiliar de los apuntes) ----------
+  // ang: giro adicional de y' alrededor de x' en grados (0 = regla del curso)
+  Core.ejes = function (pA, pB, ang = 0) {
+    const d = sub(pB, pA), L = norm(d);
+    if (L < 1e-12) throw new Error("Barra de longitud nula");
+    const ux = scl(d, 1 / L);
+    let uy;
+    if (Math.abs(ux[0]) < 1e-9 && Math.abs(ux[1]) < 1e-9) uy = [1, 0, 0];      // barra vertical
+    else { const V = Math.hypot(ux[0], ux[1]); uy = [-ux[1] / V, ux[0] / V, 0]; } // U_y'z = 0
+    let uz = cross(ux, uy);
+    if (ang) {
+      const a = ang * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+      const uy2 = add(scl(uy, c), scl(uz, s));
+      uy = uy2; uz = cross(ux, uy);
+    }
+    return { L, ux, uy, uz };
+  };
+
+  // ---------- matriz de continuidad de una barra (8x12), ec. 3.21 ----------
+  Core.matrizA = function (ux, uy, uz, L) {
+    const z = [0, 0, 0], r = (...p) => [].concat(...p);
+    return [
+      r(scl(uz, -1 / L), uy, scl(uz, 1 / L), z),
+      r(scl(uz, -2 / L), uy, scl(uz, 2 / L), uy),
+      r(scl(uz, -1 / L), z, scl(uz, 1 / L), uy),
+      r(scl(uy, 1 / L), uz, scl(uy, -1 / L), z),
+      r(scl(uy, 2 / L), uz, scl(uy, -2 / L), uz),
+      r(scl(uy, 1 / L), z, scl(uy, -1 / L), uz),
+      r(scl(ux, -1), z, ux, z),
+      r(z, scl(ux, -1), z, ux),
+    ];
+  };
+
+  // ---------- rigideces de Damy (diagonal) ----------
+  // c: parámetro de deformación por cortante (0 = Euler-Bernoulli)
+  Core.kDamy = function (E, G, s, L, c = 0) {
+    const r = (I) => {
+      const raa = 4 * E * I * (1 + c) / (L * (1 + 4 * c)), rab = 2 * E * I * (1 - 2 * c) / (L * (1 + 4 * c));
+      return [raa - rab, rab, raa - rab];
+    };
+    return [...r(s.Iy), ...r(s.Iz), E * s.A / L, G * s.J / L];
+  };
+
+  // ---------- matriz de rigidez local 12x12 (método 2) ----------
+  Core.kLocal12 = function (E, G, s, L) {
+    const k = zeros(12, 12), set = (i, j, v) => { k[i][j] = v; k[j][i] = v; };
+    const EA = E * s.A / L, GJ = G * s.J / L;
+    set(0, 0, EA); set(6, 6, EA); set(0, 6, -EA);
+    set(3, 3, GJ); set(9, 9, GJ); set(3, 9, -GJ);
+    let a = 12 * E * s.Iz / L ** 3, b = 6 * E * s.Iz / L ** 2, c = 4 * E * s.Iz / L, d = 2 * E * s.Iz / L;
+    [[1, 1, a], [7, 7, a], [1, 7, -a], [1, 5, b], [1, 11, b], [7, 5, -b], [7, 11, -b], [5, 5, c], [11, 11, c], [5, 11, d]].forEach((t) => set(...t));
+    a = 12 * E * s.Iy / L ** 3; b = 6 * E * s.Iy / L ** 2; c = 4 * E * s.Iy / L; d = 2 * E * s.Iy / L;
+    [[2, 2, a], [8, 8, a], [2, 8, -a], [2, 4, -b], [2, 10, -b], [8, 4, b], [8, 10, b], [4, 4, c], [10, 10, c], [4, 10, d]].forEach((t) => set(...t));
+    return k;
+  };
+
+  // ---------- liberaciones (articulaciones) en extremos de barra ----------
+  // Texto con los componentes liberados en un extremo: "T", "My", "Mz" (separados por espacio o coma).
+  // My = momento alrededor de y' (M2 de SAP2000), Mz = alrededor de z' (M3), T = torsión.
+  Core.LIB_COMP = { T: 3, My: 4, Mz: 5 };
+  Core.leerLib = function (txt) {
+    if (txt == null) return [];
+    const out = [];
+    String(txt).split(/[\s,;]+/).filter(Boolean).forEach((t) => {
+      const k = { t: "T", my: "My", m2: "My", mz: "Mz", m3: "Mz" }[t.toLowerCase().replace(/['’]/g, "")];
+      if (!k) throw new Error(`Liberación no reconocida: «${t}». Usa T, My o Mz.`);
+      if (!out.includes(k)) out.push(k);
+    });
+    return ["T", "My", "Mz"].filter((k) => out.includes(k));   // orden canónico
+  };
+  // índices (0..11) de los GDL locales liberados de la barra
+  Core.liberados = function (b) {
+    const r = [];
+    Core.leerLib(b.libA).forEach((k) => r.push(Core.LIB_COMP[k]));
+    Core.leerLib(b.libB).forEach((k) => r.push(Core.LIB_COMP[k] + 6));
+    return r;
+  };
+  // Damy con extremos articulados: se condensa la terna (raa, rab, rbb) de cada plano.
+  //   A libre: raa' = rab' = 0, rbb' = rbb - rab²/raa      B libre: raa' = raa - rab²/rbb, rab' = rbb' = 0
+  //   ambos libres: todo cero.  En la forma diagonal de Damy: [raa'-rab', rab', rbb'-rab'].
+  Core.kDamyLib = function (E, G, s, L, lib, c = 0) {
+    const k = Core.kDamy(E, G, s, L, c);
+    const plano = (I, iA, iB, o) => {
+      const raa = 4 * E * I * (1 + c) / (L * (1 + 4 * c)), rab = 2 * E * I * (1 - 2 * c) / (L * (1 + 4 * c)), rbb = raa;
+      const a = lib.includes(iA), b = lib.includes(iB);
+      if (!a && !b) return;
+      let ra = raa, rb = rbb, r = rab;
+      if (a && b) { ra = 0; rb = 0; r = 0; } else if (a) { rb = rbb - rab * rab / raa; ra = 0; r = 0; } else { ra = raa - rab * rab / rbb; rb = 0; r = 0; }
+      k[o] = ra - r; k[o + 1] = r; k[o + 2] = rb - r;
+    };
+    plano(s.Iy, 4, 10, 0);       // plano de My' (θy')
+    plano(s.Iz, 5, 11, 3);       // plano de Mz' (θz')
+    if (lib.includes(3) || lib.includes(9)) k[7] = 0;   // torsión liberada en un extremo
+    return k;
+  };
+  // condensación estática de los GDL liberados: k* = kcc - kcr krr⁻¹ krc ; f0* = f0 - k:r krr⁻¹ f0r
+  // (método 2 y fuerzas de empotramiento). Devuelve también el operador para recuperar los giros
+  // de extremo de la barra: u_r = -krr⁻¹ (krc u + f0r).
+  Core.condensar = function (k, f0, lib) {
+    if (!lib.length) return { k, f0 };
+    const r = lib, m = r.length;
+    const krr = r.map((i) => r.map((j) => k[i][j]));
+    const inv = invertir(krr);
+    const X = inv.map((row) => k.map((_, c) => row.reduce((s, v, t) => s + v * k[r[t]][c], 0)));  // krr⁻¹ k_r:
+    const y = inv.map((row) => row.reduce((s, v, t) => s + v * f0[r[t]], 0));                    // krr⁻¹ f0r
+    const kc = k.map((row, i) => row.map((v, j) => { let t = v; for (let a = 0; a < m; a++) t -= k[i][r[a]] * X[a][j]; return t; }));
+    const fc = f0.map((v, i) => { let t = v; for (let a = 0; a < m; a++) t -= k[i][r[a]] * y[a]; return t; });
+    r.forEach((i) => { fc[i] = 0; kc[i].fill(0); kc.forEach((row) => (row[i] = 0)); });
+    return { k: kc, f0: fc, X, y };
+  };
+  function invertir(a) {
+    const n = a.length, M = a.map((row, i) => [...row, ...row.map((_, j) => (i === j ? 1 : 0))]);
+    for (let c = 0; c < n; c++) {
+      let p = c; for (let i = c + 1; i < n; i++) if (Math.abs(M[i][c]) > Math.abs(M[p][c])) p = i;
+      if (!(Math.abs(M[p][c]) > 1e-300)) throw new Error("Liberaciones inestables en una barra (bloque singular).");
+      [M[c], M[p]] = [M[p], M[c]];
+      const d = M[c][c]; for (let j = 0; j < 2 * n; j++) M[c][j] /= d;
+      for (let i = 0; i < n; i++) if (i !== c) { const f = M[i][c]; if (f) for (let j = 0; j < 2 * n; j++) M[i][j] -= f * M[c][j]; }
+    }
+    return M.map((row) => row.slice(n));
+  }
+
+  // ---------- propiedades de sección rectangular (b en y', h en z') ----------
+  Core.seccionRect = function (b, h) {
+    const a = Math.max(b, h) / 2, c = Math.min(b, h) / 2;
+    const J = a * c ** 3 * (16 / 3 - 3.36 * (c / a) * (1 - c ** 4 / (12 * a ** 4)));
+    return { A: b * h, Iy: b * h ** 3 / 12, Iz: h * b ** 3 / 12, J };
+  };
+
+  // ---------- fuerzas de empotramiento por carga uniforme local q = [qx, qy, qz] ----------
+  // (fuerzas que los empotramientos ejercen sobre la barra, convención vectorial)
+  Core.empotramiento = function (q, L) {
+    const [qx, qy, qz] = q;
+    return [-qx * L / 2, -qy * L / 2, -qz * L / 2, 0, qz * L * L / 12, -qy * L * L / 12,
+      -qx * L / 2, -qy * L / 2, -qz * L / 2, 0, -qz * L * L / 12, qy * L * L / 12];
+  };
+
+  // ---------- solución de sistemas: Cholesky (K simétrica definida positiva) ----------
+  // Si un pivote no es positivo, la estructura es inestable (mecanismo) o le faltan apoyos.
+  Core.resolver = function (K, F, dofs) {
+    const n = F.length, a = new Float64Array(n * n);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) a[i * n + j] = K[i][j];
+    let maxd = 0; for (let i = 0; i < n; i++) maxd = Math.max(maxd, Math.abs(a[i * n + i]));
+    if (!(maxd > 0)) throw new Error("La matriz [K] es nula: revisa propiedades y apoyos.");
+    for (let j = 0; j < n; j++) {
+      const rj = j * n; let s = a[rj + j];
+      for (let k = 0; k < j; k++) s -= a[rj + k] * a[rj + k];
+      if (!(s > 1e-11 * maxd)) {
+        const d = dofs && dofs[j];
+        throw new Error("La matriz [K] es singular: la estructura es inestable o le faltan apoyos" + (d ? ` (nudo ${d.node}, ${["Ux", "Uy", "Uz", "Rx", "Ry", "Rz"][d.comp]}).` : "."));
+      }
+      const L = Math.sqrt(s); a[rj + j] = L;
+      for (let i = j + 1; i < n; i++) { const ri = i * n; let t = a[ri + j]; for (let k = 0; k < j; k++) t -= a[ri + k] * a[rj + k]; a[ri + j] = t / L; }
+    }
+    const y = new Float64Array(n);
+    for (let i = 0; i < n; i++) { let t = F[i]; for (let k = 0; k < i; k++) t -= a[i * n + k] * y[k]; y[i] = t / a[i * n + i]; }
+    const x = new Array(n).fill(0);
+    for (let i = n - 1; i >= 0; i--) { let t = y[i]; for (let k = i + 1; k < n; k++) t -= a[k * n + i] * x[k]; x[i] = t / a[i * n + i]; }
+    return x;
+  };
+
+  // ---------- validación del modelo (mensajes claros antes de calcular o exportar) ----------
+  const fin = (v) => typeof v === "number" ? isFinite(v) : (v !== "" && v != null && isFinite(Number(v)));
+  Core.validar = function (m) {
+    const err = (t) => { throw new Error(t); };
+    if (!m || !m.material) err("El modelo no tiene material.");
+    if (!fin(m.material.E) || +m.material.E <= 0) err("E debe ser un número mayor que cero.");
+    if (!fin(m.material.G) || +m.material.G <= 0) err("G debe ser un número mayor que cero.");
+    const ids = (arr, que) => { const v = {}; (arr || []).forEach((o) => {
+      const id = String(o.id == null ? "" : o.id).trim();
+      if (!id) err(`Hay ${que} sin nombre.`);
+      if (/["\r\n\t]/.test(id)) err(`El nombre de ${que} «${id}» no puede llevar comillas ni saltos de línea.`);
+      if (v[id]) err(`Nombre de ${que} repetido: «${id}».`);
+      v[id] = o; }); return v; };
+    const N = ids(m.nodes, "nudo"), B = ids(m.bars, "barra"), S = ids(m.sections, "sección");
+    if (!m.nodes.length) err("El modelo no tiene nudos.");
+    if (!m.bars.length) err("El modelo no tiene barras.");
+    m.nodes.forEach((n) => {
+      ["x", "y", "z"].forEach((k) => { if (!fin(n[k])) err(`La coordenada ${k.toUpperCase()} del nudo «${n.id}» no es un número.`); });
+      if (!Array.isArray(n.r) || n.r.length !== 6) err(`Las restricciones del nudo «${n.id}» están incompletas.`);
+    });
+    m.sections.forEach((s) => {
+      if (s.auto !== false) { if (!fin(s.b) || +s.b <= 0 || !fin(s.h) || +s.h <= 0) err(`La sección «${s.id}» necesita b y h mayores que cero.`); }
+      else ["A", "Iy", "Iz", "J"].forEach((k) => { if (!fin(s[k]) || +s[k] <= 0) err(`La propiedad ${k} de la sección «${s.id}» debe ser mayor que cero.`); });
+    });
+    m.bars.forEach((b) => {
+      if (!N[b.i] || !N[b.j]) err(`La barra «${b.id}» usa un nudo que no existe (${!N[b.i] ? b.i : b.j}).`);
+      if (b.i === b.j) err(`La barra «${b.id}» empieza y termina en el mismo nudo.`);
+      if (!S[b.sec]) err(`La barra «${b.id}» usa una sección que no existe («${b.sec}»).`);
+      if (b.ang != null && b.ang !== "" && !fin(b.ang)) err(`El giro de la barra «${b.id}» no es un número.`);
+      const A = N[b.i], C = N[b.j];
+      if (Math.hypot(C.x - A.x, C.y - A.y, C.z - A.z) < 1e-9) err(`La barra «${b.id}» tiene longitud cero (sus nudos coinciden).`);
+      let la, lb;
+      try { la = Core.leerLib(b.libA); lb = Core.leerLib(b.libB); } catch (e) { err(`Barra «${b.id}»: ${e.message}`); }
+      if (la.includes("T") && lb.includes("T")) err(`La barra «${b.id}» tiene la torsión liberada en ambos extremos: giraría libremente sobre su eje (mecanismo). Libérala solo en un extremo.`);
+    });
+    (m.nodeLoads || []).forEach((l) => {
+      if (!N[l.node]) err(`Hay una carga en un nudo que no existe («${l.node}»).`);
+      if (!Array.isArray(l.F) || l.F.length !== 6 || !l.F.every(fin)) err(`La carga del nudo «${l.node}» tiene valores que no son números.`);
+    });
+    (m.barLoads || []).forEach((l) => {
+      if (!B[l.bar]) err(`Hay una carga en una barra que no existe («${l.bar}»).`);
+      if (!["GX", "GY", "GZ", "LX", "LY", "LZ"].includes(l.dir)) err(`Dirección de carga no válida en la barra «${l.bar}».`);
+      if (!fin(l.w)) err(`La carga de la barra «${l.bar}» no es un número.`);
+    });
+    return true;
+  };
+
+  // ---------- análisis completo ----------
+  // modelo: { material:{E,G}, sections:[{id,b,h,auto,A,Iy,Iz,J}], nodes:[{id,x,y,z,r:[6]}],
+  //           bars:[{id,i,j,sec,ang}], nodeLoads:[{node,F:[6]}], barLoads:[{bar,dir,w}] }
+  // dir: "GX","GY","GZ" (global, por unidad de longitud de la barra) o "LX","LY","LZ" (local)
+  // ---------- matriz simétrica en perfil (skyline) ----------
+  // Solo se guarda, para cada renglón i, el tramo [c_i, i] del triángulo inferior.
+  // Con los nudos reordenados (Cuthill-McKee inverso) el perfil es angosto y el costo
+  // de Cholesky es ~ n·b² en lugar de n³/3 (b = ancho de banda).
+  Core.Perfil = function (c) {
+    const n = c.length, off = new Int32Array(n + 1);
+    for (let i = 0; i < n; i++) off[i + 1] = off[i] + (i - c[i] + 1);
+    this.n = n; this.c = c; this.off = off; this.a = new Float64Array(off[n]);
+  };
+  Core.Perfil.prototype.idx = function (i, j) { if (j > i) { const t = i; i = j; j = t; } return j < this.c[i] ? -1 : this.off[i] + j - this.c[i]; };
+  Core.Perfil.prototype.get = function (i, j) { const k = this.idx(i, j); return k < 0 ? 0 : this.a[k]; };
+  Core.Perfil.prototype.add = function (i, j, v) { if (j > i) return; this.a[this.off[i] + j - this.c[i]] += v; };
+  Core.Perfil.prototype.diag = function () { const d = new Float64Array(this.n); for (let i = 0; i < this.n; i++) d[i] = this.a[this.off[i] + i - this.c[i]]; return d; };
+  // Cholesky en el perfil (sobre una copia) y solución de K x = F
+  Core.Perfil.prototype.resolver = function (F, nombreGDL) {
+    const n = this.n, c = this.c, off = this.off, L = new Float64Array(this.a);
+    let maxd = 0; for (let i = 0; i < n; i++) maxd = Math.max(maxd, Math.abs(L[off[i] + i - c[i]]));
+    if (!(maxd > 0)) throw new Error("La matriz [K] es nula: revisa propiedades y apoyos.");
+    for (let i = 0; i < n; i++) {
+      const ci = c[i], oi = off[i] - ci;
+      for (let j = ci; j <= i; j++) {
+        const cj = c[j], oj = off[j] - cj, k0 = ci > cj ? ci : cj;
+        let s = L[oi + j];
+        for (let k = k0; k < j; k++) s -= L[oi + k] * L[oj + k];
+        if (j < i) L[oi + j] = s / L[oj + j];
+        else {
+          if (!(s > 1e-11 * maxd)) throw new Error("La matriz [K] es singular: la estructura es inestable o le faltan apoyos" + (nombreGDL ? ` (${nombreGDL(i)}).` : "."));
+          L[oi + i] = Math.sqrt(s);
+        }
+      }
+    }
+    const x = new Float64Array(n);
+    for (let i = 0; i < n; i++) { const ci = c[i], oi = off[i] - ci; let s = F[i]; for (let k = ci; k < i; k++) s -= L[oi + k] * x[k]; x[i] = s / L[oi + i]; }
+    for (let i = n - 1; i >= 0; i--) { const ci = c[i], oi = off[i] - ci; x[i] /= L[oi + i]; const xi = x[i]; for (let k = ci; k < i; k++) x[k] -= L[oi + k] * xi; }
+    return x;
+  };
+  // Reordenamiento de nudos: Cuthill-McKee inverso (reduce el ancho de banda)
+  Core.ordenRCM = function (ids, vecinos) {
+    const grado = {}; ids.forEach((id) => (grado[id] = (vecinos[id] || []).length));
+    const visto = new Set(), orden = [];
+    const pendientes = [...ids].sort((a, b) => grado[a] - grado[b]);
+    for (const ini of pendientes) {
+      if (visto.has(ini)) continue;
+      visto.add(ini); const cola = [ini];
+      for (let h = 0; h < cola.length; h++) {
+        const u = cola[h]; orden.push(u);
+        (vecinos[u] || []).filter((v) => !visto.has(v)).sort((a, b) => grado[a] - grado[b]).forEach((v) => { visto.add(v); cola.push(v); });
+      }
+    }
+    return orden.reverse();
+  };
+
+  // opciones: { comprobar: true|false }  (por omisión, la rigidez directa se calcula si n <= 300)
+  Core.LIMITE_COMPROBACION = 6000;
+  Core.LIMITE_K_DENSA = 600;
+  Core.analizar = function (m, opciones) {
+    Core.validar(m);
+    const E = +m.material.E, G = +m.material.G;
+    const nodo = {}; m.nodes.forEach((n) => { nodo[n.id] = n; });
+    const sec = {};
+    m.sections.forEach((s) => { sec[s.id] = s.auto !== false ? { ...s, ...Core.seccionRect(+s.b, +s.h) } : { ...s, A: +s.A, Iy: +s.Iy, Iz: +s.Iz, J: +s.J }; });
+    // numeración de grados de libertad libres
+    const map = {}, dofs = [];
+    m.nodes.forEach((n) => { map[n.id] = n.r.map((fix, c) => { if (fix) return null; dofs.push({ node: n.id, comp: c }); return dofs.length - 1; }); });
+    const n = dofs.length;
+    if (!n) throw new Error("No hay grados de libertad libres: todos los nudos están restringidos.");
+    const comprobar = opciones && opciones.comprobar != null ? !!opciones.comprobar : n <= Core.LIMITE_COMPROBACION;
+    const Fn = new Array(n).fill(0), Ffij = new Array(n).fill(0);
+    (m.nodeLoads || []).forEach((l) => { l.F.forEach((v, c) => { const g = map[l.node][c]; if (g != null) Fn[g] += +v; }); });
+    const cargasBarra = {}; (m.barLoads || []).forEach((l) => (cargasBarra[l.bar] = cargasBarra[l.bar] || []).push(l));
+    // numeración para el solver: nudos en orden Cuthill-McKee inverso
+    const vec = {}; m.bars.forEach((b) => { (vec[b.i] = vec[b.i] || []).push(b.j); (vec[b.j] = vec[b.j] || []).push(b.i); });
+    const libres = m.nodes.filter((nd) => map[nd.id].some((g) => g != null)).map((nd) => nd.id);
+    const pos = new Int32Array(n); let ks = 0;
+    Core.ordenRCM(libres, vec).forEach((id) => map[id].forEach((g) => { if (g != null) pos[g] = ks++; }));
+    const inv = new Int32Array(n); for (let g = 0; g < n; g++) inv[pos[g]] = g;
+    const c = new Int32Array(n); for (let i = 0; i < n; i++) c[i] = i;
+    m.bars.forEach((b) => { const sidx = [...map[b.i], ...map[b.j]].filter((g) => g != null).map((g) => pos[g]);
+      const mn = Math.min(...sidx); sidx.forEach((i) => { if (mn < c[i]) c[i] = mn; }); });
+    const K = new Core.Perfil(c), K2 = comprobar ? new Core.Perfil(c) : null;
+    const bars = m.bars.map((b) => {
+      const A_ = nodo[b.i], B_ = nodo[b.j], s = sec[b.sec];
+      const ej = Core.ejes([+A_.x, +A_.y, +A_.z], [+B_.x, +B_.y, +B_.z], +b.ang || 0);
+      const { L, ux, uy, uz } = ej, Rm = [ux, uy, uz];
+      const lib = Core.liberados(b);
+      const Ab = Core.matrizA(ux, uy, uz, L), kd = Core.kDamyLib(E, G, s, L, lib), kl0 = Core.kLocal12(E, G, s, L);
+      // carga distribuida en ejes locales
+      let q = [0, 0, 0];
+      (cargasBarra[b.id] || []).forEach((l) => {
+        const w = +l.w, d = l.dir;
+        if (d[0] === "G") { const g = [d === "GX" ? w : 0, d === "GY" ? w : 0, d === "GZ" ? w : 0]; q = add(q, [dot(ux, g), dot(uy, g), dot(uz, g)]); }
+        else q = add(q, [d === "LX" ? w : 0, d === "LY" ? w : 0, d === "LZ" ? w : 0]);
+      });
+      const f00 = Core.empotramiento(q, L);
+      const cond = Core.condensar(kl0, f00, lib), kl = cond.k, f0 = cond.f0;   // sin liberaciones: kl = kl0, f0 = f00
+      const cols = [...map[b.i], ...map[b.j]];           // GDL global de cada una de las 12 columnas
+      // ensamble por continuidad: K += A^T k A (solo columnas libres)
+      for (let a = 0; a < 12; a++) { const ga = cols[a]; if (ga == null) continue;
+        for (let cc = 0; cc < 12; cc++) { const gc = cols[cc]; if (gc == null) continue;
+          const sa = pos[ga], sc = pos[gc]; if (sc > sa) continue;
+          let s1 = 0; for (let r = 0; r < 8; r++) s1 += Ab[r][a] * kd[r] * Ab[r][cc];
+          K.add(sa, sc, s1); } }
+      // rigidez directa: T y [k][T] (para la comprobación y para recuperar fuerzas)
+      const T = zeros(12, 12);
+      for (let blk = 0; blk < 4; blk++) for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) T[3 * blk + i][3 * blk + j] = Rm[i][j];
+      const kT = kl.map((row) => T[0].map((_, j) => row.reduce((acc, v, k) => acc + v * T[k][j], 0)));
+      if (comprobar) for (let a = 0; a < 12; a++) { const ga = cols[a]; if (ga == null) continue;
+        for (let cc = 0; cc < 12; cc++) { const gc = cols[cc]; if (gc == null) continue;
+          const sa = pos[ga], sc = pos[gc]; if (sc > sa) continue;
+          let s2 = 0; for (let k = 0; k < 12; k++) s2 += T[k][a] * kT[k][cc];
+          K2.add(sa, sc, s2); } }
+      // fuerzas de fijación en globales
+      for (let a = 0; a < 12; a++) { const g = cols[a]; if (g == null) continue; let s3 = 0; for (let k = 0; k < 12; k++) s3 += T[k][a] * f0[k]; Ffij[g] += s3; }
+      return { id: b.id, i: b.i, j: b.j, sec: b.sec, s, L, ux, uy, uz, Rm, Ab, kd, kl, kT, T, q, f0, f00, cols, lib, cond, libA: Core.leerLib(b.libA), libB: Core.leerLib(b.libB) };
+    });
+    const FII = Fn.map((v, i) => v - Ffij[i]);
+    const Fs = new Float64Array(n); for (let g = 0; g < n; g++) Fs[pos[g]] = FII[g];
+    const nombre = (i) => { const dd = dofs[inv[i]]; return `nudo ${dd.node}, ${["Ux", "Uy", "Uz", "Rx", "Ry", "Rz"][dd.comp]}`; };
+    const hayLib = bars.some((b) => b.lib.length);
+    let xs; try { xs = K.resolver(Fs, nombre); } catch (e) {
+      if (hayLib) e.message += " Si liberaste ese giro en todas las barras que llegan al nudo, restríngelo en el nudo o deja continua alguna barra.";
+      throw e; }
+    const d = new Array(n); for (let g = 0; g < n; g++) d[g] = xs[pos[g]];
+    let difK = null, difD = null, difF = null;
+    if (comprobar) {
+      const x2 = K2.resolver(Fs, nombre); difK = 0; difD = 0; difF = 0;
+      for (let g = 0; g < n; g++) difD = Math.max(difD, Math.abs(d[g] - x2[pos[g]]));
+      for (let k = 0; k < K.a.length; k++) difK = Math.max(difK, Math.abs(K.a[k] - K2.a[k]));
+    }
+    // [K] en la numeración del modelo: densa solo para modelos chicos (para mostrarla)
+    const Kdiag = new Array(n); { const dg = K.diag(); for (let g = 0; g < n; g++) Kdiag[g] = dg[pos[g]]; }
+    let Kd = null;
+    if (n <= Core.LIMITE_K_DENSA) { Kd = zeros(n, n); for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) Kd[i][j] = K.get(pos[i], pos[j]); }
+    let banda = 0; for (let i = 0; i < n; i++) banda = Math.max(banda, i - c[i]);
+    const perfil = { terminos: K.a.length, banda, memoriaMB: (K.a.length * 8 * (comprobar ? 3 : 2)) / 1e6, densaMB: n * n * 8 / 1e6 };
+    bars.forEach((b) => {
+      const dl = b.cols.map((g) => (g == null ? 0 : d[g]));
+      b.dglob = dl;
+      b.e = b.Ab.map((row) => row.reduce((acc, v, k) => acc + v * dl[k], 0));
+      b.P = b.e.map((v, r) => v * b.kd[r]);
+      const P = b.P, L = b.L;
+      const MAy = P[0] + P[1], MBy = P[1] + P[2], MAz = P[3] + P[4], MBz = P[4] + P[5], N = P[6], MT = P[7];
+      b.Mends = { MAy, MBy, MAz, MBz, N, MT };
+      b.fII = [-N, (MAz + MBz) / L, -(MAy + MBy) / L, -MT, MAy, MAz, N, -(MAz + MBz) / L, (MAy + MBy) / L, MT, MBy, MBz];
+      if (comprobar) { const f2 = b.kT.map((row) => row.reduce((acc, v, k) => acc + v * dl[k], 0));
+        difF = Math.max(difF, ...f2.map((v, k) => Math.abs(v - b.fII[k]))); }
+      b.f = b.fII.map((v, k) => v + b.f0[k]);
+      // desplazamientos locales de los extremos de la barra; en un extremo liberado el giro de la barra
+      // no es el del nudo: u_r = -krr⁻¹ (krc u + f0r)
+      const ul = [0, 1, 2, 3].flatMap((blk) => [0, 1, 2].map((i) => b.Rm[i][0] * dl[3 * blk] + b.Rm[i][1] * dl[3 * blk + 1] + b.Rm[i][2] * dl[3 * blk + 2]));
+      if (b.lib.length) { const u0 = ul.slice(); b.lib.forEach((i) => (u0[i] = 0));
+        b.lib.forEach((i, a) => { let t = b.cond.y[a]; for (let c = 0; c < 12; c++) if (!b.lib.includes(c)) t += b.cond.X[a][c] * u0[c]; ul[i] = -t; }); }
+      b.ul = ul;
+      const toG = (v) => [0, 1, 2].map((j) => b.Rm[0][j] * v[0] + b.Rm[1][j] * v[1] + b.Rm[2][j] * v[2]);
+      b.fgA = [...toG(b.f.slice(0, 3)), ...toG(b.f.slice(3, 6))];
+      b.fgB = [...toG(b.f.slice(6, 9)), ...toG(b.f.slice(9, 12))];
+    });
+    // reacciones y equilibrio de nudos (suma de fuerzas de extremo en globales - carga aplicada)
+    const sumN = {}; m.nodes.forEach((nd) => (sumN[nd.id] = [0, 0, 0, 0, 0, 0]));
+    bars.forEach((b) => { for (let c = 0; c < 6; c++) { sumN[b.i][c] += b.fgA[c]; sumN[b.j][c] += b.fgB[c]; } });
+    const load = {}; m.nodes.forEach((nd) => (load[nd.id] = [0, 0, 0, 0, 0, 0]));
+    (m.nodeLoads || []).forEach((l) => l.F.forEach((v, c) => (load[l.node][c] += +v)));
+    const reac = {}; let eqMax = 0;
+    m.nodes.forEach((nd) => {
+      const r = sumN[nd.id].map((v, c) => v - load[nd.id][c]);
+      if (nd.r.some(Boolean)) reac[nd.id] = r.map((v, c) => (nd.r[c] ? v : 0));
+      r.forEach((v, c) => { if (!nd.r[c]) eqMax = Math.max(eqMax, Math.abs(v)); });
+    });
+    // equilibrio global respecto al origen
+    const RF = [0, 0, 0], RM = [0, 0, 0];
+    const addF = (F, p) => { for (let i = 0; i < 3; i++) RF[i] += F[i]; const mm = add(F.slice(3, 6), cross(p, F.slice(0, 3))); for (let i = 0; i < 3; i++) RM[i] += mm[i]; };
+    Object.keys(reac).forEach((id) => addF(reac[id], [+nodo[id].x, +nodo[id].y, +nodo[id].z]));
+    Object.keys(load).forEach((id) => addF(load[id], [+nodo[id].x, +nodo[id].y, +nodo[id].z]));
+    bars.forEach((b) => {
+      const qg = [0, 1, 2].map((j) => b.Rm[0][j] * b.q[0] + b.Rm[1][j] * b.q[1] + b.Rm[2][j] * b.q[2]);
+      const W = scl(qg, b.L), pa = nodo[b.i], pm = add([+pa.x, +pa.y, +pa.z], scl(b.ux, b.L / 2));
+      addF([...W, 0, 0, 0], pm);
+    });
+    const globMax = Math.max(...RF.map(Math.abs), ...RM.map(Math.abs));
+    return { ok: true, n, dofs, map, K: Kd, Kdiag, Kperfil: K, pos, perfil, Fn, Ffij, FII, d, bars, reac, nodo,
+      checks: { comprobar, difK, difD, difF, eqMax, globMax, RF, RM } };
+  };
+
+  // ---------- fuerzas internas en la cara positiva a la distancia x de A ----------
+  // devuelve [N, Vy', Vz', T, My', Mz']
+  Core.interno = function (b, x) {
+    const FA = b.f.slice(0, 3), MA = b.f.slice(3, 6), q = b.q;
+    const Fi = scl(add(FA, scl(q, x)), -1);
+    const Mi = scl(add(add(MA, cross([-x, 0, 0], FA)), cross([-x / 2, 0, 0], scl(q, x))), -1);
+    return [...Fi, ...Mi];
+  };
+
+  // ---------- puntos característicos exactos de un diagrama ----------
+  // idx: 0 N, 1 Vy', 2 Vz', 3 T, 4 My', 5 Mz'. Devuelve [{x, v}] con los extremos A y B y,
+  // si existe, el extremo interior del momento (donde el cortante correspondiente es cero).
+  Core.raizInterior = function (b, idx) {
+    let x0 = null;
+    if (idx === 4 && Math.abs(b.q[2]) > 1e-14) x0 = -b.f[2] / b.q[2];   // V_z'(x) = 0
+    if (idx === 5 && Math.abs(b.q[1]) > 1e-14) x0 = -b.f[1] / b.q[1];   // V_y'(x) = 0
+    return x0 != null && x0 > 1e-9 * b.L && x0 < b.L * (1 - 1e-9) ? x0 : null;
+  };
+  Core.extremos = function (b, idx) {
+    const out = [{ x: 0, v: Core.interno(b, 0)[idx] }, { x: b.L, v: Core.interno(b, b.L)[idx] }];
+    const x0 = Core.raizInterior(b, idx);
+    if (x0 != null) out.push({ x: x0, v: Core.interno(b, x0)[idx], interior: true });
+    return out;
+  };
+  Core.maxAbs = function (b, idx) { return Core.extremos(b, idx).reduce((m, p) => (Math.abs(p.v) > Math.abs(m.v) ? p : m)); };
+
+  // ---------- desplazamiento (global) de un punto de la barra para la deformada ----------
+  Core.desplazamiento = function (b, s, E) {
+    const L = b.L, R = b.Rm, dl = b.dglob;
+    const loc = (v) => R.map((r) => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
+    const u = b.ul || [...loc(dl.slice(0, 3)), ...loc(dl.slice(3, 6)), ...loc(dl.slice(6, 9)), ...loc(dl.slice(9, 12))];
+    const uA = u.slice(0, 3), rA = u.slice(3, 6), uB = u.slice(6, 9), rB = u.slice(9, 12);
+    const x = s * L, N1 = 1 - 3 * s * s + 2 * s ** 3, N2 = x * (1 - s) ** 2, N3 = 3 * s * s - 2 * s ** 3, N4 = x * (s * s - s);
+    const ux = uA[0] * (1 - s) + uB[0] * s;
+    let vy = N1 * uA[1] + N2 * rA[2] + N3 * uB[1] + N4 * rB[2];
+    let wz = N1 * uA[2] - N2 * rA[1] + N3 * uB[2] - N4 * rB[1];
+    const p = x * x * (L - x) * (L - x) / 24;             // flecha de empotramiento por carga uniforme
+    vy += b.q[1] * p / (E * b.s.Iz); wz += b.q[2] * p / (E * b.s.Iy);
+    return [0, 1, 2].map((j) => R[0][j] * ux + R[1][j] * vy + R[2][j] * wz);
+  };
+
+  if (typeof module !== "undefined" && module.exports) module.exports = Core; else root.Core = Core;
+})(this);
+
+/* Marco3D — modelos de ejemplo y generador de marcos (plantilla tipo "3D Frames" de SAP2000) */
+(function (root) {
+  "use strict";
+  const Modelos = {};
+  Modelos.tarea = () => ({
+    nombre: "Ejercicio de la tarea (12 GDL)",
+    material: { E: 1, G: 0.4 },
+    sections: [{ id: "C40x60", b: 0.4, h: 0.6, auto: true }, { id: "V40x50", b: 0.4, h: 0.5, auto: true }],
+    nodes: [
+      { id: "1", x: 0, y: 0, z: 3, r: [0, 0, 0, 0, 0, 0] }, { id: "2", x: 4, y: 0, z: 3, r: [0, 0, 0, 0, 0, 0] },
+      { id: "A", x: 0, y: 0, z: 0, r: [1, 1, 1, 1, 1, 1] }, { id: "B", x: 4, y: 4, z: 0, r: [1, 1, 1, 1, 1, 1] }],
+    bars: [{ id: "1", i: "A", j: "1", sec: "C40x60", ang: 0 }, { id: "2", i: "1", j: "2", sec: "V40x50", ang: 0 }, { id: "3", i: "B", j: "2", sec: "C40x60", ang: 0 }],
+    nodeLoads: [{ node: "1", F: [0, 5, 0, 0, 0, 0] }],
+    barLoads: [{ bar: "2", dir: "GZ", w: -2 }],
+  });
+  // Generador: nPisos, h, nX, Lx, nY, Ly, secciones, carga gravitacional w en vigas, cargas laterales por nivel
+  Modelos.generar = function (o) {
+    const m = { nombre: `Marco ${o.nX}×${o.nY} crujías, ${o.nPisos} niveles`, material: { E: +o.E, G: +o.G },
+      sections: [{ id: "COL", b: +o.colB, h: +o.colH, auto: true }, { id: "VIG", b: +o.vigB, h: +o.vigH, auto: true }],
+      nodes: [], bars: [], nodeLoads: [], barLoads: [] };
+    const id = (i, j, k) => `N${k}_${i}_${j}`;
+    for (let k = 0; k <= o.nPisos; k++) for (let j = 0; j <= o.nY; j++) for (let i = 0; i <= o.nX; i++)
+      m.nodes.push({ id: id(i, j, k), x: +(i * o.Lx).toFixed(6), y: +(j * o.Ly).toFixed(6), z: +(k * o.h).toFixed(6), r: k === 0 ? [1, 1, 1, 1, 1, 1] : [0, 0, 0, 0, 0, 0] });
+    let nb = 0; const bar = (a, b, s) => { m.bars.push({ id: `B${++nb}`, i: a, j: b, sec: s, ang: 0 }); return `B${nb}`; };
+    for (let k = 1; k <= o.nPisos; k++) {
+      for (let j = 0; j <= o.nY; j++) for (let i = 0; i <= o.nX; i++) bar(id(i, j, k - 1), id(i, j, k), "COL");
+      for (let j = 0; j <= o.nY; j++) for (let i = 0; i < o.nX; i++) { const b = bar(id(i, j, k), id(i + 1, j, k), "VIG"); if (+o.w) m.barLoads.push({ bar: b, dir: "GZ", w: -Math.abs(+o.w) }); }
+      for (let i = 0; i <= o.nX; i++) for (let j = 0; j < o.nY; j++) { const b = bar(id(i, j, k), id(i, j + 1, k), "VIG"); if (+o.w) m.barLoads.push({ bar: b, dir: "GZ", w: -Math.abs(+o.w) }); }
+      if (+o.Fx || +o.Fy) {   // fuerza lateral total del nivel, repartida en partes iguales entre sus nudos
+        const nn = (o.nX + 1) * (o.nY + 1), fx = (+o.Fx || 0) / nn, fy = (+o.Fy || 0) / nn;
+        for (let j = 0; j <= o.nY; j++) for (let i = 0; i <= o.nX; i++) m.nodeLoads.push({ node: id(i, j, k), F: [fx, fy, 0, 0, 0, 0] });
+      }
+    }
+    return m;
+  };
+  // Resultados de SAP2000 v26.3 para el ejercicio de la tarea (para la comprobación)
+  Modelos.sapTarea = {
+    disp: { "1": [2021.2494544298727, 3598.62806476963, -57.935567023158995, -1588.284595836398, 1769.5359544854703, -1843.259321141987],
+            "2": [2003.2425715200534, -4880.271584162649, -6607.918285310263, 2112.633546043044, 1099.1868745547474, -1288.172752791078] },
+    reac: { A: [0.9003441454909621, -3.891843747248108, 4.63484536185272, 9.649648650879518, -0.5369887998813917, 1.8462085360558143],
+            B: [-0.9003441454909719, -1.108156252751853, 3.365154638147265, -8.110267203468775, -2.0023926475295184, -1.0149601070121372] },
+    // P, V2, V3, T, M2, M3 en extremos A (x=0) y B (x=L)
+    ends: { "1": [[-4.63484536185272, -0.9003441454909621, 3.891843747248108, -1.8462085360558143, 9.649648650879518, 0.5369887998813917], [-4.63484536185272, -0.9003441454909621, 3.891843747248108, -1.8462085360558143, -2.0258825908648053, 3.2380212363542777]],
+            "2": [[-0.900344145490962, -1.1081562527518916, -4.634845361852721, 2.0258825908648066, -3.2380212363542764, -1.8462085360558145], [-0.900344145490962, -1.1081562527518916, 3.3651546381472794, 2.0258825908648066, -0.6986397889433942, 2.5864164749517515]],
+            "3": [[-2.905617785089838, 0.9003441454909717, -2.027229958866716, -0.9929380538163326, -8.110267203468775, 2.0134036741274204], [-2.905617785089838, 0.9003441454909717, -2.027229958866716, -0.9929380538163326, 2.025882590864804, -2.488317053327439]] },
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = Modelos; else root.Modelos = Modelos;
+})(this);
+
+/* Marco3D — exportación del modelo a SAP2000 (.s2k, tablas de texto). Probado con SAP2000 v26.3 */
+(function (root) {
+  "use strict";
+  const S2K = {};
+  // ángulo de eje local de SAP2000 para que el eje 2 coincida con y' y el 3 con z'
+  S2K.anguloSAP = function (ux, uy) {
+    const V = root.Core ? root.Core.vec : require("../core/core.js").vec;
+    let e2;
+    if (Math.abs(ux[0]) < 1e-9 && Math.abs(ux[1]) < 1e-9) e2 = [1, 0, 0];
+    else { const z = [0, 0, 1], p = V.sub(z, V.scl(ux, V.dot(z, ux))); e2 = V.scl(p, 1 / V.norm(p)); }
+    const e3 = V.cross(ux, e2);
+    const a = Math.atan2(V.dot(uy, e3), V.dot(uy, e2)) * 180 / Math.PI;
+    return Math.abs(a) < 1e-9 ? 0 : +a.toFixed(6);
+  };
+  // los nombres con espacios u otros signos van entre comillas
+  S2K.q = (id) => { const t = String(id); return /^[A-Za-z0-9_.\-]+$/.test(t) ? t : `"${t}"`; };
+  S2K.exportar = function (m) {
+    const Core = root.Core || require("../core/core.js");
+    Core.validar(m);
+    const E0 = +m.material.E, G0 = +m.material.G, nu0 = E0 / (2 * G0) - 1;
+    if (!(nu0 > -1 && nu0 < 0.5)) throw new Error(`SAP2000 requiere un módulo de Poisson entre −1 y 0.5; con E = ${E0} y G = ${G0} resulta ν = ${nu0.toFixed(4)}. Usa G > E/3.`);
+    const q = S2K.q;
+    const L = [], g = (v) => +(+v).toPrecision(10);
+    const fecha = new Date();
+    L.push(`File C:\\Marco3D\\modelo.s2k was saved on ${fecha.getMonth() + 1}/${fecha.getDate()}/${String(fecha.getFullYear()).slice(2)} at 00:00:00`, "");
+    L.push('TABLE:  "PROGRAM CONTROL"', '   ProgramName=SAP2000   Version=26.0.0   CurrUnits="Tonf, m, C"', "");
+    L.push('TABLE:  "ACTIVE DEGREES OF FREEDOM"', "   UX=Yes   UY=Yes   UZ=Yes   RX=Yes   RY=Yes   RZ=Yes", "");
+    L.push('TABLE:  "COORDINATE SYSTEMS"', "   Name=GLOBAL   Type=Cartesian   X=0   Y=0   Z=0   AboutZ=0   AboutY=0   AboutX=0", "");
+    L.push('TABLE:  "JOINT COORDINATES"');
+    m.nodes.forEach((n) => L.push(`   Joint=${q(n.id)}   CoordSys=GLOBAL   CoordType=Cartesian   XorR=${g(n.x)}   Y=${g(n.y)}   Z=${g(n.z)}   SpecialJt=Yes   GlobalX=${g(n.x)}   GlobalY=${g(n.y)}   GlobalZ=${g(n.z)}`));
+    L.push("");
+    const rest = m.nodes.filter((n) => n.r.some(Boolean));
+    if (rest.length) { L.push('TABLE:  "JOINT RESTRAINT ASSIGNMENTS"'); const yn = (v) => (v ? "Yes" : "No");
+      rest.forEach((n) => L.push(`   Joint=${q(n.id)}   U1=${yn(n.r[0])}   U2=${yn(n.r[1])}   U3=${yn(n.r[2])}   R1=${yn(n.r[3])}   R2=${yn(n.r[4])}   R3=${yn(n.r[5])}`)); L.push(""); }
+    L.push('TABLE:  "CONNECTIVITY - FRAME"');
+    m.bars.forEach((b) => L.push(`   Frame=${q(b.id)}   JointI=${q(b.i)}   JointJ=${q(b.j)}   IsCurved=No`));
+    L.push("");
+    const E = E0, G = G0, nu = nu0;
+    L.push('TABLE:  "MATERIAL PROPERTIES 01 - GENERAL"', "   Material=MAT1   Type=Other   SymType=Isotropic   TempDepend=No   Color=Blue", "");
+    L.push('TABLE:  "MATERIAL PROPERTIES 02 - BASIC MECHANICAL PROPERTIES"', `   Material=MAT1   UnitWeight=0   UnitMass=0   E1=${g(E)}   G12=${g(G)}   U12=${g(nu)}   A1=0`, "");
+    L.push('TABLE:  "FRAME SECTION PROPERTIES 01 - GENERAL"');
+    m.sections.forEach((s) => {
+      const p = s.auto !== false ? Core.seccionRect(+s.b, +s.h) : { A: +s.A, Iy: +s.Iy, Iz: +s.Iz, J: +s.J };
+      const t3 = +s.b || Math.sqrt(12 * p.Iz / Math.max(p.A, 1e-12)), t2 = +s.h || Math.sqrt(12 * p.Iy / Math.max(p.A, 1e-12));
+      L.push(`   SectionName=${q(s.id)}   Material=MAT1   Shape=General   t3=${g(t3)}   t2=${g(t2)}   Area=${g(p.A)}   TorsConst=${g(p.J)}   I33=${g(p.Iz)}   I22=${g(p.Iy)}   I23=0   AS2=0   AS3=0   ` +
+        `S33=${g(p.Iz / (t3 / 2))}   S22=${g(p.Iy / (t2 / 2))}   Z33=${g(t2 * t3 * t3 / 4)}   Z22=${g(t3 * t2 * t2 / 4)}   R33=${g(Math.sqrt(p.Iz / p.A))}   R22=${g(Math.sqrt(p.Iy / p.A))}`);
+    });
+    L.push("", 'TABLE:  "FRAME SECTION ASSIGNMENTS"');
+    m.bars.forEach((b) => L.push(`   Frame=${q(b.id)}   SectionType=General   AutoSelect=N.A.   AnalSect=${q(b.sec)}   DesignSect=${q(b.sec)}   MatProp=Default`));
+    L.push("", 'TABLE:  "FRAME LOCAL AXES ASSIGNMENTS 1 - TYPICAL"');
+    const nodo = {}; m.nodes.forEach((n) => (nodo[n.id] = n));
+    m.bars.forEach((b) => { const A = nodo[b.i], B = nodo[b.j];
+      const e = Core.ejes([+A.x, +A.y, +A.z], [+B.x, +B.y, +B.z], +b.ang || 0);
+      L.push(`   Frame=${q(b.id)}   Angle=${S2K.anguloSAP(e.ux, e.uy)}   AdvanceAxes=No`); });
+    // articulaciones: My' = M2, Mz' = M3, T = T (extremo I = A, J = B)
+    const conLib = m.bars.filter((b) => Core.leerLib(b.libA).length || Core.leerLib(b.libB).length);
+    if (conLib.length) { L.push("", 'TABLE:  "FRAME RELEASE ASSIGNMENTS 1 - GENERAL"');
+      const yn = (arr, k) => (arr.includes(k) ? "Yes" : "No");
+      conLib.forEach((b) => { const a = Core.leerLib(b.libA), c = Core.leerLib(b.libB);
+        L.push(`   Frame=${q(b.id)}   PI=No   V2I=No   V3I=No   TI=${yn(a, "T")}   M2I=${yn(a, "My")}   M3I=${yn(a, "Mz")}   PJ=No   V2J=No   V3J=No   TJ=${yn(c, "T")}   M2J=${yn(c, "My")}   M3J=${yn(c, "Mz")}   PartialFix=No`); }); }
+    L.push("", 'TABLE:  "FRAME OUTPUT STATION ASSIGNMENTS"');
+    m.bars.forEach((b) => L.push(`   Frame=${q(b.id)}   StationType=MinNumSta   MinNumSta=9   AddAtElmInt=Yes   AddAtPtLoad=Yes`));
+    L.push("", 'TABLE:  "LOAD PATTERN DEFINITIONS"', "   LoadPat=CARGA   DesignType=Other   SelfWtMult=0", "");
+    L.push('TABLE:  "LOAD CASE DEFINITIONS"', '   Case=CARGA   Type=LinStatic   InitialCond=Zero   DesTypeOpt="Prog Det"   DesignType=Other   AutoType=None   RunCase=Yes', "");
+    L.push('TABLE:  "CASE - STATIC 1 - LOAD ASSIGNMENTS"', '   Case=CARGA   LoadType="Load pattern"   LoadName=CARGA   LoadSF=1', "");
+    if ((m.nodeLoads || []).length) { L.push('TABLE:  "JOINT LOADS - FORCE"');
+      m.nodeLoads.forEach((l) => L.push(`   Joint=${q(l.node)}   LoadPat=CARGA   CoordSys=GLOBAL   F1=${g(l.F[0])}   F2=${g(l.F[1])}   F3=${g(l.F[2])}   M1=${g(l.F[3])}   M2=${g(l.F[4])}   M3=${g(l.F[5])}`)); L.push(""); }
+    if ((m.barLoads || []).length) { L.push('TABLE:  "FRAME LOADS - DISTRIBUTED"');
+      const dirs = { GX: ["GLOBAL", "X"], GY: ["GLOBAL", "Y"], GZ: ["GLOBAL", "Z"], LX: ["Local", "1"], LY: ["Local", "2"], LZ: ["Local", "3"] };
+      m.barLoads.forEach((l) => { let [cs, d] = dirs[l.dir]; let w = g(l.w);
+        if (l.dir === "GZ") { d = "Gravity"; w = g(-l.w); }   // Gravity positivo = hacia -Z
+        L.push(`   Frame=${q(l.bar)}   LoadPat=CARGA   CoordSys=${cs}   Type=Force   Dir=${d}   DistType=RelDist   RelDistA=0   RelDistB=1   FOverLA=${w}   FOverLB=${w}`); });
+      L.push(""); }
+    L.push("END TABLE DATA");
+    return L.join("\r\n") + "\r\n";
+  };
+  if (typeof module !== "undefined" && module.exports) module.exports = S2K; else root.S2K = S2K;
+})(this);
+
+/* Marco3D — lectura de resultados de SAP2000 y comparación con el cálculo propio.
+   Lee sin librerías: Excel (.xlsx exportado por SAP), CSV y texto de tablas (.s2k/.$2k con resultados).
+   Tablas usadas: Joint Displacements, Joint Reactions, Element Forces - Frames. */
+(function (root) {
+  "use strict";
+  const SapRes = {};
+
+  // ---------- ZIP (.xlsx) ----------
+  async function inflar(u8, metodo) {
+    if (metodo === 0) return u8;
+    if (metodo !== 8) throw new Error("El Excel usa una compresión no soportada (método " + metodo + ").");
+    if (typeof DecompressionStream === "undefined") throw new Error("Este navegador no puede abrir .xlsx; actualízalo o guarda las hojas como CSV.");
+    const s = new Blob([u8]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    return new Uint8Array(await new Response(s).arrayBuffer());
+  }
+  SapRes.leerZip = function (buf) {
+    const u8 = new Uint8Array(buf), dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    let e = -1;
+    for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65558); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+    if (e < 0) throw new Error("El archivo no es un Excel (.xlsx) válido.");
+    const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+    const td = new TextDecoder("utf-8"), out = {};
+    for (let k = 0; k < n; k++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) throw new Error("El Excel está dañado (directorio del zip).");
+      const metodo = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+      const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), loff = dv.getUint32(p + 42, true);
+      const nombre = td.decode(u8.subarray(p + 46, p + 46 + nlen)); p += 46 + nlen + xlen + clen;
+      const ini = loff + 30 + dv.getUint16(loff + 26, true) + dv.getUint16(loff + 28, true);
+      out[nombre] = { metodo, datos: u8.subarray(ini, ini + csize) };
+    }
+    return out;
+  };
+  const des = (s) => s.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (m, c) => {
+    const t = c.toLowerCase(); if (t === "amp") return "&"; if (t === "lt") return "<"; if (t === "gt") return ">"; if (t === "quot") return '"'; if (t === "apos") return "'";
+    return String.fromCodePoint(t[1] === "x" ? parseInt(t.slice(2), 16) : parseInt(t.slice(1), 10)); });
+  const colIdx = (ref) => { const m = /^([A-Z]+)/.exec(ref); let k = 0; for (const ch of m[1]) k = k * 26 + ch.charCodeAt(0) - 64; return k - 1; };
+  SapRes.leerXlsx = async function (buf) {
+    const z = SapRes.leerZip(buf), td = new TextDecoder("utf-8");
+    const texto = async (nombre) => (z[nombre] ? td.decode(await inflar(z[nombre].datos, z[nombre].metodo)) : null);
+    const wb = await texto("xl/workbook.xml"); if (!wb) throw new Error("El archivo no parece un libro de Excel.");
+    const rels = (await texto("xl/_rels/workbook.xml.rels")) || "";
+    const ss = []; const sst = await texto("xl/sharedStrings.xml");
+    if (sst) for (const m of sst.matchAll(/<si>([\s\S]*?)<\/si>/g)) ss.push(des([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((t) => t[1]).join("")));
+    const destino = {}; for (const m of rels.matchAll(/<Relationship\b[^>]*>/g)) { const id = /Id="([^"]+)"/.exec(m[0]), tg = /Target="([^"]+)"/.exec(m[0]); if (id && tg) destino[id[1]] = tg[1]; }
+    const hojas = [];
+    for (const m of wb.matchAll(/<sheet\b[^>]*>/g)) {
+      const nom = /name="([^"]*)"/.exec(m[0]), rid = /r:id="([^"]+)"/.exec(m[0]); if (!nom || !rid) continue;
+      let tg = destino[rid[1]] || ""; tg = tg.replace(/^\//, ""); if (!tg.startsWith("xl/")) tg = "xl/" + tg;
+      const x = await texto(tg); if (!x) continue;
+      const filas = [];
+      for (const r of x.matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>/g)) {
+        const ri = /r="(\d+)"/.exec(r[1]); const fila = [];
+        for (const c of r[2].matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+          const ref = /r="([A-Z]+\d+)"/.exec(c[1]); const t = /t="([^"]+)"/.exec(c[1]); const cuerpo = c[2] || "";
+          let v = null; const vv = /<v>([\s\S]*?)<\/v>/.exec(cuerpo);
+          if (t && t[1] === "s") v = vv ? ss[+vv[1]] : "";
+          else if (t && t[1] === "inlineStr") v = des([...cuerpo.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((q) => q[1]).join(""));
+          else if (t && (t[1] === "str" || t[1] === "e")) v = vv ? des(vv[1]) : "";
+          else if (t && t[1] === "b") v = vv ? vv[1] === "1" : false;
+          else v = vv ? Number(vv[1]) : null;
+          fila[ref ? colIdx(ref[1]) : fila.length] = v;
+        }
+        filas[ri ? +ri[1] - 1 : filas.length] = fila;
+      }
+      hojas.push({ nombre: des(nom[1]), filas: filas.map((f) => f || []) });
+    }
+    return hojas.map((h) => SapRes.tablaDeFilas(h.filas, h.nombre)).filter(Boolean);
+  };
+
+  // ---------- CSV ----------
+  SapRes.leerCSV = function (txt, nombreArchivo) {
+    txt = txt.replace(/^﻿/, "");
+    const primera = txt.split(/\r?\n/, 1)[0] || "", sep = (primera.match(/;/g) || []).length > (primera.match(/,/g) || []).length ? ";" : (primera.includes("\t") ? "\t" : ",");
+    const filas = []; let f = [], c = "", q = false;
+    for (let i = 0; i < txt.length; i++) {
+      const ch = txt[i];
+      if (q) { if (ch === '"') { if (txt[i + 1] === '"') { c += '"'; i++; } else q = false; } else c += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === sep) { f.push(c); c = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && txt[i + 1] === "\n") i++; f.push(c); filas.push(f); f = []; c = ""; }
+      else c += ch;
+    }
+    if (c !== "" || f.length) { f.push(c); filas.push(f); }
+    const num = (v) => { const t = String(v).trim(); if (t === "") return null; const n = Number(sep === ";" ? t.replace(",", ".") : t); return isFinite(n) && /^[-+]?[\d.,]+(e[-+]?\d+)?$/i.test(t) ? n : t; };
+    // puede traer varias tablas, cada una iniciada con "TABLE:"
+    const tablas = []; let actual = [];
+    const cerrar = () => { if (actual.length) { const t = SapRes.tablaDeFilas(actual.map((r) => r.map(num)), nombreArchivo); if (t) tablas.push(t); } actual = []; };
+    filas.forEach((r) => { if (/^\s*TABLE:/i.test(r[0] || "")) cerrar(); if (r.some((x) => String(x).trim() !== "")) actual.push(r); });
+    cerrar();
+    return tablas;
+  };
+
+  // ---------- texto de tablas de SAP (.s2k / .$2k) ----------
+  SapRes.leerS2K = function (txt) {
+    const tablas = []; let nombre = null, regs = [];
+    const cerrar = () => { if (nombre && regs.length) { const cols = [...new Set(regs.flatMap((r) => Object.keys(r)))];
+      tablas.push(SapRes.tablaDeFilas([["TABLE:  " + nombre], cols, cols.map(() => ""), ...regs.map((r) => cols.map((k) => r[k] ?? null))], nombre)); } nombre = null; regs = []; };
+    const lineas = txt.replace(/ _\r?\n\s*/g, " ").split(/\r?\n/);
+    for (const ln of lineas) {
+      const m = /^\s*TABLE:\s+"([^"]+)"/i.exec(ln); if (m) { cerrar(); nombre = m[1]; continue; }
+      if (!nombre || !ln.trim() || /^\s*END TABLE DATA/i.test(ln)) continue;
+      const r = {}; for (const kv of ln.matchAll(/([A-Za-z0-9_]+)=("([^"]*)"|\S+)/g)) { const v = kv[3] != null ? kv[3] : kv[2]; const n = Number(v); r[kv[1]] = kv[3] == null && isFinite(n) ? n : v; }
+      if (Object.keys(r).length) regs.push(r);
+    }
+    cerrar();
+    return tablas.filter(Boolean);
+  };
+
+  // ---------- reconocer una tabla a partir de sus filas ----------
+  // filas[0] puede ser "TABLE:  Nombre"; luego encabezados, (opcional) unidades y datos
+  SapRes.tablaDeFilas = function (filas, nombreAlterno) {
+    filas = filas.filter((r) => r && r.some((v) => v != null && String(v).trim() !== ""));
+    if (!filas.length) return null;
+    let nombre = nombreAlterno || "", i = 0;
+    const c0 = String(filas[0][0] ?? "");
+    let conNombre = false;
+    if (/^\s*TABLE:/i.test(c0)) { nombre = c0.replace(/^\s*TABLE:\s*/i, "").replace(/"/g, "").trim(); i = 1; conNombre = true; }
+    if (!filas[i]) return null;
+    const enc = filas[i].map((h) => String(h ?? "").trim()); i++;
+    let unidades = null;
+    if (filas[i] && filas[i].some((v) => /^(text|m|cm|mm|in|ft|radians|degrees|tonf|kn|n|kgf|kip|lb|tonf-m|kn-m|yes\/no)$/i.test(String(v ?? "").trim()))) { unidades = filas[i].map((u) => String(u ?? "").trim()); i++; }
+    const datos = filas.slice(i);
+    const H = enc.map((h) => h.toLowerCase());
+    // Si la tabla trae nombre de SAP, solo cuenta el nombre exacto: hay tablas con las mismas columnas
+    // (p. ej. «Element Joint Forces - Frames» tiene Joint, F1…M3 como las reacciones, pero no lo son).
+    let tipo = null;
+    const nom = nombre.replace(/\s+/g, " ").trim().toLowerCase();
+    const porNombre = { "joint displacements": "disp", "joint reactions": "reac", "element forces - frames": "frames" };
+    if (conNombre || nom in porNombre) tipo = porNombre[nom] || null;
+    else {   // CSV sin nombre de tabla: se reconoce por columnas, excluyendo tablas por barra
+      const tiene = (k) => H.includes(k);
+      if (tiene("joint") && !tiene("frame") && tiene("u1") && tiene("r3")) tipo = "disp";
+      else if (tiene("joint") && !tiene("frame") && tiene("f1") && tiene("m3")) tipo = "reac";
+      else if (tiene("frame") && !tiene("joint") && tiene("station") && tiene("p") && tiene("m3")) tipo = "frames";
+    }
+    return { nombre, tipo, enc, unidades, datos };
+  };
+
+  // ---------- unidades → t, m, rad ----------
+  const LON = { m: 1, cm: 0.01, mm: 0.001, in: 0.0254, ft: 0.3048 };
+  const FZA = { tonf: 1, kn: 1 / 9.80665, n: 1 / 9806.65, kgf: 0.001, kip: 0.45359237, lb: 0.00045359237 };
+  function factor(u, clase) {
+    const t = String(u || "").trim().toLowerCase();
+    if (!t || t === "text") return 1;
+    if (clase === "rot") return t.startsWith("deg") ? Math.PI / 180 : 1;
+    if (clase === "lon") { if (t in LON) return LON[t]; throw new Error(`Unidad de longitud no reconocida: «${u}».`); }
+    if (clase === "fza") { if (t in FZA) return FZA[t]; throw new Error(`Unidad de fuerza no reconocida: «${u}».`); }
+    if (clase === "mom") { const [a, b] = t.split("-"); if (a in FZA && b in LON) return FZA[a] * LON[b]; throw new Error(`Unidad de momento no reconocida: «${u}».`); }
+    return 1;
+  }
+
+  // ---------- juntar tablas en resultados de SAP ----------
+  SapRes.interpretar = function (tablas) {
+    const res = { disp: {}, reac: {}, frames: {}, casos: new Set(), avisos: [], tablas: [], ignoradas: [] };
+    const filasPor = { disp: [], reac: [], frames: [] };
+    tablas.forEach((t) => {
+      if (!t) return;
+      if (!t.tipo) { if (t.nombre) res.ignoradas.push(t.nombre); return; }
+      res.tablas.push(t.nombre || t.tipo);
+      const ix = (k) => t.enc.findIndex((h) => h.toLowerCase() === k.toLowerCase());
+      const u = (k) => (t.unidades ? t.unidades[ix(k)] : "");
+      const iCase = ix("OutputCase"), iStep = ix("StepType");
+      const comp = t.tipo === "disp" ? ["U1", "U2", "U3", "R1", "R2", "R3"] : t.tipo === "reac" ? ["F1", "F2", "F3", "M1", "M2", "M3"] : ["P", "V2", "V3", "T", "M2", "M3"];
+      const clases = t.tipo === "disp" ? ["lon", "lon", "lon", "rot", "rot", "rot"] : ["fza", "fza", "fza", "mom", "mom", "mom"];
+      const ic = comp.map((k) => { const j = ix(k); if (j < 0) throw new Error(`La tabla «${t.nombre}» no tiene la columna ${k}.`); return j; });
+      const fc = comp.map((k, n) => factor(u(k), clases[n]));
+      const iId = ix(t.tipo === "frames" ? "Frame" : "Joint"), iSt = ix("Station"), fSt = t.tipo === "frames" ? factor(u("Station"), "lon") : 1;
+      if (iId < 0) throw new Error(`La tabla «${t.nombre}» no tiene la columna ${t.tipo === "frames" ? "Frame" : "Joint"}.`);
+      t.datos.forEach((r) => {
+        if (r[iId] == null || String(r[iId]).trim() === "") return;
+        if (iStep >= 0 && r[iStep] != null && String(r[iStep]).trim() !== "" && !/^(max|step\s*1)?$/i.test(String(r[iStep]).trim())) return;
+        const caso = iCase >= 0 ? String(r[iCase] ?? "").trim() : "(sin caso)"; res.casos.add(caso);
+        const v = ic.map((j, n) => Number(r[j]) * fc[n]);
+        if (v.some((x) => !isFinite(x))) return;
+        filasPor[t.tipo].push({ id: String(r[iId]).trim(), caso, v, x: iSt >= 0 ? Number(r[iSt]) * fSt : null });
+      });
+    });
+    res.casos = [...res.casos];
+    res.filas = filasPor;
+    if (!filasPor.disp.length && !filasPor.reac.length && !filasPor.frames.length)
+      throw new Error("No se encontraron las tablas Joint Displacements, Joint Reactions ni Element Forces - Frames.");
+    return res;
+  };
+  SapRes.casoPorOmision = (sap) => (sap.casos.includes("CARGA") ? "CARGA" : sap.casos[0]);
+
+  // ---------- comparación ----------
+  // Convención de SAP2000 con ejes 2 = y', 3 = z': P, V2, V3, T, M3 = N, Vy', Vz', T, Mz'; M2 = −My'.
+  // Las diferencias se miden en % del valor máximo de cada tipo (traslación, giro, fuerza, momento).
+  SapRes.comparar = function (R, modelo, sap, caso) {
+    const Core = root.Core || require("../core/core.js");
+    caso = caso || SapRes.casoPorOmision(sap);
+    const F = (k) => sap.filas[k].filter((r) => r.caso === caso);
+    const nodo = {}; modelo.nodes.forEach((n) => (nodo[n.id] = n));
+    const barra = {}; R.bars.forEach((b) => (barra[b.id] = b));
+    const faltan = { nudos: new Set(), barras: new Set() };
+    const maxAbs = (filas, ks) => { let m = 1e-30; for (const r of filas) for (const k of ks) { const v = Math.abs(r.v[k]); if (v > m) m = v; } return m; };   // sin «...»: miles de filas
+    // desplazamientos
+    const dF = F("disp"), mT = maxAbs(dF, [0, 1, 2]), mR = maxAbs(dF, [3, 4, 5]);
+    const disp = dF.map((r) => {
+      if (!nodo[r.id]) { faltan.nudos.add(r.id); return null; }
+      const g = R.map[r.id], a = g.map((gg) => (gg == null ? 0 : R.d[gg]));
+      const err = Math.max(...[0, 1, 2].map((k) => Math.abs(a[k] - r.v[k]) / mT), ...[3, 4, 5].map((k) => Math.abs(a[k] - r.v[k]) / mR));
+      return { id: r.id, propio: a, sap: r.v, err };
+    }).filter(Boolean);
+    // reacciones
+    const rF = F("reac"), mF = maxAbs(rF, [0, 1, 2]), mM = maxAbs(rF, [3, 4, 5]);
+    const libresConReac = new Set();
+    const reac = rF.map((r) => {
+      if (!nodo[r.id]) { faltan.nudos.add(r.id); return null; }
+      if (!nodo[r.id].r.some(Boolean)) libresConReac.add(r.id);
+      const a = R.reac[r.id] || [0, 0, 0, 0, 0, 0];
+      const err = Math.max(...[0, 1, 2].map((k) => Math.abs(a[k] - r.v[k]) / mF), ...[3, 4, 5].map((k) => Math.abs(a[k] - r.v[k]) / mM));
+      return { id: r.id, propio: a, sap: r.v, err };
+    }).filter(Boolean);
+    // fuerzas internas en las estaciones de SAP
+    const eF = F("frames"), mFi = maxAbs(eF, [0, 1, 2]), mMi = maxAbs(eF, [3, 4, 5]);
+    const porBarra = {};
+    const frames = eF.map((r) => {
+      const b = barra[r.id]; if (!b) { faltan.barras.add(r.id); return null; }
+      const x = Math.min(Math.max(r.x || 0, 0), b.L), v = Core.interno(b, x), a = [v[0], v[1], v[2], v[3], -v[4], v[5]];
+      const err = Math.max(...[0, 1, 2].map((k) => Math.abs(a[k] - r.v[k]) / mFi), ...[3, 4, 5].map((k) => Math.abs(a[k] - r.v[k]) / mMi));
+      porBarra[r.id] = Math.max(porBarra[r.id] || 0, err);
+      return { id: r.id, x, propio: a, sap: r.v, err };
+    }).filter(Boolean);
+    const mx = (arr) => arr.reduce((m, r) => Math.max(m, r.err), 0);
+    const sinSap = { nudos: modelo.nodes.filter((n) => !dF.some((r) => r.id === n.id)).length, barras: R.bars.filter((b) => !(b.id in porBarra)).length };
+    return { caso, disp, reac, frames, porBarra, max: { disp: mx(disp), reac: mx(reac), frames: mx(frames) },
+      refs: { mT, mR, mF, mM, mFi, mMi }, faltan: { nudos: [...faltan.nudos], barras: [...faltan.barras] }, sinSap, libresConReac: [...libresConReac] };
+  };
+
+  SapRes.leerArchivos = async function (archivos) {
+    const tablas = [];
+    for (const a of archivos) {
+      const nombre = a.name || "archivo", ext = nombre.toLowerCase().split(".").pop();
+      if (ext === "xlsx") tablas.push(...(await SapRes.leerXlsx(await a.arrayBuffer())));
+      else if (ext === "csv" || ext === "txt") tablas.push(...SapRes.leerCSV(await a.text(), nombre));
+      else if (ext === "s2k" || ext === "$2k") tablas.push(...SapRes.leerS2K(await a.text()));
+      else if (ext === "xls") throw new Error("El formato .xls antiguo no se puede leer; en Excel guárdalo como .xlsx o CSV.");
+      else throw new Error(`Formato no reconocido: ${nombre}. Usa .xlsx, .csv o .s2k.`);
+    }
+    return SapRes.interpretar(tablas);
+  };
+
+  if (typeof module !== "undefined" && module.exports) module.exports = SapRes; else root.SapRes = SapRes;
+})(this);
+
+/* Marco3D — generadores de geometría (v0.6). Todo lo generado son nudos y barras comunes (marco 3D):
+   se agregan a las mismas tablas y se pueden editar después. Módulo sin interfaz (navegador o Node). */
+(function (root) {
+  "use strict";
+  const Gen = {};
+  const err = (t) => { throw new Error(t); };
+  const r6 = (v) => +(+v).toFixed(6);
+  const cm = (v) => +(v * 100).toFixed(1);
+
+  // ---------- listas tipo SAP: "3@6, 8" → [6, 6, 6, 8] ----------
+  Gen.lista = function (txt, que = "lista") {
+    const out = [];
+    const T = String(txt == null ? "" : txt), pc = T.includes(";");   // con «;» la coma es decimal
+    T.split(pc ? /[;\s]+/ : /[,\s]+/).filter(Boolean).forEach((t) => {
+      const m = (pc ? t.replace(",", ".") : t).match(/^(?:(\d+)\s*[@x*])?\s*([0-9]*\.?[0-9]+(?:e[-+]?\d+)?)$/i);
+      if (!m) err(`${que}: no entiendo «${t}». Usa números separados por coma, p. ej. «3@6, 8».`);
+      const n = m[1] ? +m[1] : 1, v = +m[2];
+      if (!(v > 0)) err(`${que}: los valores deben ser mayores que cero («${t}»).`);
+      if (n < 1 || n > 1000) err(`${que}: repetición fuera de rango en «${t}».`);
+      for (let k = 0; k < n; k++) out.push(v);
+    });
+    return out;
+  };
+  const acum = (arr) => { const o = [0]; arr.forEach((v) => o.push(r6(o[o.length - 1] + v))); return o; };
+  const nombreSec = (pref, b, h) => `${pref}${cm(b)}x${cm(h)}`;
+  const addSec = (m, pref, b, h) => { const id = nombreSec(pref, b, h); if (!m.sections.some((s) => s.id === id)) m.sections.push({ id, b: +b, h: +h, auto: true }); return id; };
+
+  // ---------- edificio ortogonal con claros y alturas variables, secciones por tramos,
+  //            remetimientos y volados ----------
+  // o = { xs:[claros X], ys:[claros Y], hs:[alturas], E, G, col:[b,h], vig:[b,h],
+  //       tramos:[{desde,hasta,col:[b,h],vig:[b,h]}], remet:[{desde, x:[a,b], y:[c,d]}] (ejes 1-based),
+  //       volados:[{desde,hasta,lado:"X+|X-|Y+|Y-",L,borde}], w, Fx, Fy }
+  Gen.ortogonal = function (o) {
+    const xs = o.xs || [], ys = o.ys || [], hs = o.hs || [];
+    if (!hs.length) err("Se necesita al menos un nivel.");
+    if (!xs.length && !ys.length) err("Se necesita al menos una crujía en X o en Y.");
+    const nX = xs.length, nY = ys.length, nP = hs.length, X = acum(xs), Y = acum(ys), Z = acum(hs);
+    const m = { nombre: `Edificio ${nX}×${nY} crujías, ${nP} niveles`, material: { E: +o.E, G: +o.G }, sections: [], nodes: [], bars: [], nodeLoads: [], barLoads: [] };
+    // secciones por nivel
+    const tramos = (o.tramos || []).slice().sort((a, b) => a.desde - b.desde);
+    tramos.forEach((t) => { if (!(t.desde >= 1 && t.hasta >= t.desde && t.hasta <= nP)) err(`Tramo de secciones fuera de rango: niveles ${t.desde}–${t.hasta} (el edificio tiene ${nP}).`); });
+    const simple = !tramos.length && !(o.volados || []).length;
+    const secNivel = [];
+    for (let k = 1; k <= nP; k++) {
+      const t = tramos.filter((tt) => k >= tt.desde && k <= tt.hasta).pop(), c = t ? t.col : o.col, v = t ? t.vig : o.vig;
+      if (!(c[0] > 0 && c[1] > 0 && v[0] > 0 && v[1] > 0)) err(`Secciones del nivel ${k}: b y h deben ser mayores que cero.`);
+      secNivel[k] = simple ? { col: "COL", vig: "VIG" } : { col: addSec(m, "C", c[0], c[1]), vig: addSec(m, "V", v[0], v[1]) };
+    }
+    if (simple) m.sections.push({ id: "COL", b: +o.col[0], h: +o.col[1], auto: true }, { id: "VIG", b: +o.vig[0], h: +o.vig[1], auto: true });
+    // planta de cada nivel (remetimientos): huella en ejes [i0,i1] × [j0,j1] (0-based)
+    const remet = (o.remet || []).slice().sort((a, b) => a.desde - b.desde);
+    const huella = [];
+    for (let k = 0; k <= nP; k++) {
+      let h = [0, nX, 0, nY];
+      remet.forEach((r) => { if (k >= r.desde) h = [r.x[0] - 1, r.x[1] - 1, r.y[0] - 1, r.y[1] - 1]; });
+      huella[k] = h;
+    }
+    remet.forEach((r) => {
+      if (!(r.desde >= 2 && r.desde <= nP)) err(`Remetimiento: el nivel inicial debe estar entre 2 y ${nP}.`);
+      const [a, b] = r.x, [c, d] = r.y;
+      if (!(a >= 1 && b <= nX + 1 && a <= b && c >= 1 && d <= nY + 1 && c <= d)) err(`Remetimiento desde el nivel ${r.desde}: ejes fuera de rango (X 1–${nX + 1}, Y 1–${nY + 1}).`);
+      if (a === b && c === d) err(`Remetimiento desde el nivel ${r.desde}: la planta queda en un solo eje en X y en Y (una columna aislada).`);
+    });
+    for (let k = 1; k <= nP; k++) { const h = huella[k], g = huella[k - 1];
+      if (h[0] < g[0] || h[1] > g[1] || h[2] < g[2] || h[3] > g[3]) err(`El nivel ${k} sale de la planta del nivel ${k - 1}: los remetimientos solo pueden reducir la planta.`); }
+    huella[0] = huella[1];
+    const dentro = (k, i, j) => { const h = huella[k]; return i >= h[0] && i <= h[1] && j >= h[2] && j <= h[3]; };
+    const id = (i, j, k) => `N${k}_${i}_${j}`;
+    for (let k = 0; k <= nP; k++) for (let j = 0; j <= nY; j++) for (let i = 0; i <= nX; i++)
+      if (dentro(k, i, j)) m.nodes.push({ id: id(i, j, k), x: X[i], y: Y[j], z: Z[k], r: k === 0 ? [1, 1, 1, 1, 1, 1] : [0, 0, 0, 0, 0, 0] });
+    let nb = 0; const bar = (a, b, s) => { m.bars.push({ id: `B${++nb}`, i: a, j: b, sec: s, ang: 0 }); return `B${nb}`; };
+    const w = Math.abs(+o.w || 0), viga = (a, b, s) => { const bb = bar(a, b, s); if (w) m.barLoads.push({ bar: bb, dir: "GZ", w: -w }); return bb; };
+    for (let k = 1; k <= nP; k++) {
+      const S = secNivel[k];
+      for (let j = 0; j <= nY; j++) for (let i = 0; i <= nX; i++) if (dentro(k, i, j)) bar(id(i, j, k - 1), id(i, j, k), S.col);
+      for (let j = 0; j <= nY; j++) for (let i = 0; i < nX; i++) if (dentro(k, i, j) && dentro(k, i + 1, j)) viga(id(i, j, k), id(i + 1, j, k), S.vig);
+      for (let i = 0; i <= nX; i++) for (let j = 0; j < nY; j++) if (dentro(k, i, j) && dentro(k, i, j + 1)) viga(id(i, j, k), id(i, j + 1, k), S.vig);
+    }
+    // volados: un nudo y una viga en voladizo por cada nudo del borde; con «borde», viga que une las puntas
+    (o.volados || []).forEach((v, iv) => {
+      if (!(v.desde >= 1 && v.hasta >= v.desde && v.hasta <= nP)) err(`Volado ${iv + 1}: niveles fuera de rango.`);
+      if (!(v.L > 0)) err(`Volado ${iv + 1}: la longitud debe ser mayor que cero.`);
+      if (!["X+", "X-", "Y+", "Y-"].includes(v.lado)) err(`Volado ${iv + 1}: lado no válido.`);
+      for (let k = v.desde; k <= v.hasta; k++) {
+        const h = huella[k], enX = v.lado[0] === "X", sg = v.lado[1] === "+" ? 1 : -1;
+        const fijo = enX ? (sg > 0 ? h[1] : h[0]) : (sg > 0 ? h[3] : h[2]);
+        const rango = enX ? [h[2], h[3]] : [h[0], h[1]];
+        let prev = null;
+        for (let t = rango[0]; t <= rango[1]; t++) {
+          const i = enX ? fijo : t, j = enX ? t : fijo, base = id(i, j, k);
+          const nid = `V${k}_${v.lado.replace("+", "p").replace("-", "m")}_${t}`;
+          if (m.nodes.some((n) => n.id === nid)) continue;
+          m.nodes.push({ id: nid, x: r6(X[i] + (enX ? sg * v.L : 0)), y: r6(Y[j] + (enX ? 0 : sg * v.L)), z: Z[k], r: [0, 0, 0, 0, 0, 0] });
+          viga(base, nid, secNivel[k].vig);
+          if (v.borde !== false && prev) viga(prev, nid, secNivel[k].vig);
+          prev = nid;
+        }
+      }
+    });
+    // fuerza lateral por nivel repartida entre los nudos del nivel
+    if (+o.Fx || +o.Fy) for (let k = 1; k <= nP; k++) {
+      const nn = m.nodes.filter((n) => Math.abs(n.z - Z[k]) < 1e-9 && n.id[0] === "N");
+      nn.forEach((n) => m.nodeLoads.push({ node: n.id, F: [(+o.Fx || 0) / nn.length, (+o.Fy || 0) / nn.length, 0, 0, 0, 0] }));
+    }
+    return m;
+  };
+
+  // ---------- núcleo: columnas en el perímetro de un rectángulo y vigas peraltadas en cada nivel;
+  //            opcionalmente diagonales en cada tablero para dar la rigidez de los muros ----------
+  // o = { x0, y0, bx, by, nx, ny (divisiones por lado), zs:[elevaciones, la primera = base], col:[b,h], vig:[b,h],
+  //       diag:[b,h] | null, E, G }
+  Gen.nucleo = function (o) {
+    if (!(o.bx > 0 && o.by > 0)) err("Núcleo: las dimensiones deben ser mayores que cero.");
+    const nx = Math.max(1, Math.round(o.nx || 1)), ny = Math.max(1, Math.round(o.ny || 1));
+    const zs = o.zs; if (!zs || zs.length < 2) err("Núcleo: se necesitan al menos dos elevaciones (base y un nivel).");
+    const m = { material: { E: +o.E, G: +o.G }, sections: [], nodes: [], bars: [], nodeLoads: [], barLoads: [] };
+    const sc = addSec(m, "NC", o.col[0], o.col[1]), sv = addSec(m, "NV", o.vig[0], o.vig[1]), sd = o.diag ? addSec(m, "ND", o.diag[0], o.diag[1]) : null;
+    const per = [];   // puntos del perímetro en orden
+    for (let a = 0; a < nx; a++) per.push([o.x0 + o.bx * a / nx, o.y0]);
+    for (let a = 0; a < ny; a++) per.push([o.x0 + o.bx, o.y0 + o.by * a / ny]);
+    for (let a = 0; a < nx; a++) per.push([o.x0 + o.bx * (1 - a / nx), o.y0 + o.by]);
+    for (let a = 0; a < ny; a++) per.push([o.x0, o.y0 + o.by * (1 - a / ny)]);
+    const id = (k, a) => `NU${k}_${a}`;
+    zs.forEach((z, k) => per.forEach(([x, y], a) => m.nodes.push({ id: id(k, a), x: r6(x), y: r6(y), z: r6(z), r: k === 0 ? [1, 1, 1, 1, 1, 1] : [0, 0, 0, 0, 0, 0] })));
+    let nb = 0; const bar = (a, b, s, extra) => m.bars.push(Object.assign({ id: `NB${++nb}`, i: a, j: b, sec: s, ang: 0 }, extra || {}));
+    const art = { libA: "T My Mz", libB: "My Mz" };
+    for (let k = 1; k < zs.length; k++) per.forEach((_, a) => {
+      const b = (a + 1) % per.length;
+      bar(id(k - 1, a), id(k, a), sc);
+      bar(id(k, a), id(k, b), sv);
+      if (sd) { bar(id(k - 1, a), id(k, b), sd, art); bar(id(k - 1, b), id(k, a), sd, art); }
+    });
+    return m;
+  };
+
+  // ---------- planta polar: anillos de columnas con giro por nivel y reducción de radio ----------
+  // o = { R:[radios], nSeg, hs:[alturas], giro (°/nivel), escala (radio arriba / radio abajo), centro,
+  //       col:[b,h], vig:[b,h], rad:[b,h], E, G, w, Fx, Fy }
+  Gen.polar = function (o) {
+    const R = (o.R || []).slice().sort((a, b) => a - b), n = Math.round(o.nSeg), hs = o.hs || [];
+    if (!R.length) err("Planta polar: indica al menos un radio.");
+    if (!(n >= 3 && n <= 360)) err("Planta polar: el número de divisiones debe estar entre 3 y 360.");
+    if (!hs.length) err("Planta polar: se necesita al menos un nivel.");
+    const esc = o.escala == null || o.escala === "" ? 1 : +o.escala;
+    if (!(esc > 0)) err("Planta polar: la escala del radio en la azotea debe ser mayor que cero.");
+    const Z = acum(hs), nP = hs.length, giro = (+o.giro || 0) * Math.PI / 180;
+    const m = { nombre: `Torre polar ${R.length} anillo(s) × ${n}, ${nP} niveles`, material: { E: +o.E, G: +o.G }, sections: [], nodes: [], bars: [], nodeLoads: [], barLoads: [] };
+    const sc = addSec(m, "C", o.col[0], o.col[1]), sv = addSec(m, "V", o.vig[0], o.vig[1]), sr = addSec(m, "R", (o.rad || o.vig)[0], (o.rad || o.vig)[1]);
+    const id = (k, r, a) => `P${k}_${r}_${a}`, cid = (k) => `PC${k}`;
+    for (let k = 0; k <= nP; k++) {
+      const f = 1 + (esc - 1) * Z[k] / Z[nP], th0 = giro * k, emp = k === 0 ? [1, 1, 1, 1, 1, 1] : [0, 0, 0, 0, 0, 0];
+      if (o.centro) m.nodes.push({ id: cid(k), x: 0, y: 0, z: Z[k], r: emp.slice() });
+      R.forEach((rr, r) => { for (let a = 0; a < n; a++) { const t = th0 + 2 * Math.PI * a / n;
+        m.nodes.push({ id: id(k, r, a), x: r6(rr * f * Math.cos(t)), y: r6(rr * f * Math.sin(t)), z: Z[k], r: emp.slice() }); } });
+    }
+    let nb = 0; const bar = (a, b, s) => { m.bars.push({ id: `B${++nb}`, i: a, j: b, sec: s, ang: 0 }); return `B${nb}`; };
+    const w = Math.abs(+o.w || 0), viga = (a, b, s) => { const bb = bar(a, b, s); if (w) m.barLoads.push({ bar: bb, dir: "GZ", w: -w }); };
+    for (let k = 1; k <= nP; k++) {
+      if (o.centro) bar(cid(k - 1), cid(k), sc);
+      R.forEach((_, r) => { for (let a = 0; a < n; a++) bar(id(k - 1, r, a), id(k, r, a), sc); });
+      R.forEach((_, r) => { for (let a = 0; a < n; a++) viga(id(k, r, a), id(k, r, (a + 1) % n), sv); });
+      for (let r = 1; r < R.length; r++) for (let a = 0; a < n; a++) viga(id(k, r - 1, a), id(k, r, a), sr);
+      if (o.centro) for (let a = 0; a < n; a++) viga(cid(k), id(k, 0, a), sr);
+    }
+    if (+o.Fx || +o.Fy) for (let k = 1; k <= nP; k++) {
+      const nn = m.nodes.filter((nd) => Math.abs(nd.z - Z[k]) < 1e-9);
+      nn.forEach((nd) => m.nodeLoads.push({ node: nd.id, F: [(+o.Fx || 0) / nn.length, (+o.Fy || 0) / nn.length, 0, 0, 0, 0] }));
+    }
+    return m;
+  };
+
+  // ---------- unir un modelo generado al modelo actual (los nudos en la misma posición se comparten) ----------
+  // reemplazar: si una barra nueva coincide con una existente, la existente toma la sección y liberaciones nuevas
+  Gen.fusionar = function (m, nuevo, tol = 1e-6, reemplazar = false) {
+    const key = (n) => [n.x, n.y, n.z].map((v) => Math.round(+v / tol)).join(",");
+    const pos = {}; m.nodes.forEach((n) => (pos[key(n)] = n));
+    const nIds = new Set(m.nodes.map((n) => n.id)), bIds = new Set(m.bars.map((b) => b.id));
+    const libre = (set, base) => { if (!set.has(base)) return base; let k = 2; while (set.has(`${base}_${k}`)) k++; return `${base}_${k}`; };
+    const mapN = {}, mapB = {}, mapS = {};
+    let nN = 0, nB = 0, comp = 0, rep = 0;
+    nuevo.sections.forEach((s) => {
+      const e = m.sections.find((x) => x.id === s.id);
+      if (!e) { m.sections.push({ ...s }); mapS[s.id] = s.id; return; }
+      const igual = e.auto !== false && s.auto !== false && +e.b === +s.b && +e.h === +s.h;
+      if (igual) { mapS[s.id] = s.id; return; }
+      const nid = libre(new Set(m.sections.map((x) => x.id)), s.id); m.sections.push({ ...s, id: nid }); mapS[s.id] = nid;
+    });
+    nuevo.nodes.forEach((n) => {
+      const e = pos[key(n)];
+      if (e) { mapN[n.id] = e.id; comp++; e.r = e.r.map((v, c) => (v || n.r[c] ? 1 : 0)); return; }
+      const nid = libre(nIds, n.id); nIds.add(nid);
+      const nn = { ...n, id: nid, r: n.r.slice() }; m.nodes.push(nn); pos[key(nn)] = nn; mapN[n.id] = nid; nN++;
+    });
+    const par = new Set(m.bars.map((b) => [b.i, b.j].sort().join("\u0000")));
+    nuevo.bars.forEach((b) => {
+      const i = mapN[b.i], j = mapN[b.j], k = [i, j].sort().join("\u0000");
+      if (i === j) return;
+      if (par.has(k)) { rep++;
+        if (reemplazar) { const e = m.bars.find((x) => [x.i, x.j].sort().join("\u0000") === k);
+          if (e) { e.sec = mapS[b.sec] || b.sec; ["libA", "libB"].forEach((q) => { const v = e.i === i ? b[q] : b[q === "libA" ? "libB" : "libA"]; if (v) e[q] = v; else delete e[q]; }); } }
+        return; }
+      const bid = libre(bIds, b.id); bIds.add(bid); par.add(k);
+      m.bars.push({ ...b, id: bid, i, j, sec: mapS[b.sec] || b.sec }); mapB[b.id] = bid; nB++;
+    });
+    (nuevo.nodeLoads || []).forEach((l) => m.nodeLoads.push({ node: mapN[l.node], F: l.F.slice() }));
+    (nuevo.barLoads || []).forEach((l) => { if (mapB[l.bar]) m.barLoads.push({ ...l, bar: mapB[l.bar] }); });
+    return { nudos: nN, barras: nB, compartidos: comp, repetidas: rep };
+  };
+
+  // ---------- tableros verticales (para diagonales y outriggers) ----------
+  // Un tablero es una viga p–q con una columna debajo de p (p0) y otra debajo de q (q0).
+  const H = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  Gen.niveles = function (m) {
+    const zs = [...new Set(m.nodes.map((n) => r6(n.z)))].sort((a, b) => a - b); return zs;
+  };
+  Gen.tableros = function (m) {
+    const nodo = {}; m.nodes.forEach((n) => (nodo[n.id] = n));
+    const zs = Gen.niveles(m), nivel = (z) => zs.findIndex((v) => Math.abs(v - z) < 1e-6);
+    const abajo = {};   // columna (no diagonal) que llega a p desde el nivel inferior
+    m.bars.forEach((b) => {
+      const A = nodo[b.i], B = nodo[b.j]; if (!A || !B || b.diag) return;
+      const [lo, hi] = A.z < B.z ? [A, B] : [B, A];
+      if (hi.z - lo.z < 1e-6 || nivel(hi.z) - nivel(lo.z) !== 1) return;
+      if (H(lo, hi) > 0.75 * (hi.z - lo.z) + 1e-9) return;   // muy inclinada: no es columna
+      const e = abajo[hi.id]; if (!e || H(lo, hi) < H(nodo[e.lo], hi)) abajo[hi.id] = { lo: lo.id, bar: b.id };
+    });
+    const out = [];
+    m.bars.forEach((b) => {
+      const p = nodo[b.i], q = nodo[b.j]; if (!p || !q || b.diag || Math.abs(p.z - q.z) > 1e-6) return;
+      const cp = abajo[p.id], cq = abajo[q.id]; if (!cp || !cq || cp.lo === cq.lo) return;
+      out.push({ viga: b.id, p: p.id, q: q.id, p0: cp.lo, q0: cq.lo, k: nivel(p.z), z: p.z });
+    });
+    return out;
+  };
+  // tablero en el perímetro de su nivel: sobre el rectángulo envolvente o en el radio máximo
+  Gen.perimetral = function (m) {
+    const nodo = {}; m.nodes.forEach((n) => (nodo[n.id] = n));
+    // solo cuentan los nudos de tableros (con columna debajo): los volados no mueven el perímetro
+    const enTab = new Set(); Gen.tableros(m).forEach((tb) => { enTab.add(tb.p); enTab.add(tb.q); });
+    const porZ = {}; m.nodes.forEach((n) => { if (!enTab.has(n.id)) return; const k = r6(n.z); (porZ[k] = porZ[k] || []).push(n); });
+    const info = {};
+    Object.entries(porZ).forEach(([z, ns]) => {
+      const xs = ns.map((n) => +n.x), ys = ns.map((n) => +n.y), cx = xs.reduce((a, b) => a + b) / ns.length, cy = ys.reduce((a, b) => a + b) / ns.length;
+      info[z] = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), cx, cy, rmax: Math.max(...ns.map((n) => Math.hypot(n.x - cx, n.y - cy))) };
+    });
+    const t = 1e-6;
+    return (tb) => {
+      const p = nodo[tb.p], q = nodo[tb.q], I = info[r6(p.z)]; if (!I) return false;
+      const lado = (a, b) => (Math.abs(a.x - I.x0) < t && Math.abs(b.x - I.x0) < t) || (Math.abs(a.x - I.x1) < t && Math.abs(b.x - I.x1) < t) ||
+        (Math.abs(a.y - I.y0) < t && Math.abs(b.y - I.y0) < t) || (Math.abs(a.y - I.y1) < t && Math.abs(b.y - I.y1) < t);
+      const rad = (a) => Math.abs(Math.hypot(a.x - I.cx, a.y - I.cy) - I.rmax) < 1e-4 * Math.max(1, I.rmax);
+      return lado(p, q) || (rad(p) && rad(q));
+    };
+  };
+  // agregar contravientos en los tableros que pasan el filtro
+  // o = { tipo: "X" | "L" (chevron Λ) | "D" (diagonal alternada), sec:[b,h], articular, filtro(tb) }
+  Gen.arriostrar = function (m, o) {
+    const tbs = Gen.tableros(m).filter(o.filtro || (() => true));
+    if (!tbs.length) return { tableros: 0, barras: 0 };
+    const sid = addSec(m, o.prefijo || "D", o.sec[0], o.sec[1]);
+    const bIds = new Set(m.bars.map((b) => b.id)), nIds = new Set(m.nodes.map((n) => n.id));
+    const libre = (set, base) => { let k = 1; while (set.has(`${base}${k}`)) k++; set.add(`${base}${k}`); return `${base}${k}`; };
+    const art = o.articular !== false ? { libA: "T My Mz", libB: "My Mz" } : {};
+    const par = new Set(m.bars.map((b) => [b.i, b.j].sort().join("\u0000")));
+    let nb = 0;
+    const diag = (a, b) => { const k = [a, b].sort().join("\u0000"); if (par.has(k)) return; par.add(k);
+      m.bars.push(Object.assign({ id: libre(bIds, "D"), i: a, j: b, sec: sid, ang: 0, diag: true }, art)); nb++; };
+    const nodo = {}; m.nodes.forEach((n) => (nodo[n.id] = n));
+    tbs.forEach((tb, it) => {
+      if (o.tipo === "X") { diag(tb.p0, tb.q); diag(tb.q0, tb.p); }
+      else if (o.tipo === "D") { if ((tb.k + it) % 2) diag(tb.p0, tb.q); else diag(tb.q0, tb.p); }
+      else {   // chevron: se parte la viga en su punto medio
+        const vi = m.bars.findIndex((b) => b.id === tb.viga); if (vi < 0) return;
+        const v = m.bars[vi], A = nodo[v.i], B = nodo[v.j];
+        const mid = { id: libre(nIds, `${v.id}_m`), x: r6((+A.x + +B.x) / 2), y: r6((+A.y + +B.y) / 2), z: r6((+A.z + +B.z) / 2), r: [0, 0, 0, 0, 0, 0] };
+        m.nodes.push(mid); nodo[mid.id] = mid;
+        const v1 = { ...v, id: libre(bIds, `${v.id}a`), j: mid.id }, v2 = { ...v, id: libre(bIds, `${v.id}b`), i: mid.id };
+        delete v1.libB; delete v2.libA; if (v2.libB == null) delete v2.libB;
+        m.bars.splice(vi, 1, v1, v2);
+        const cargas = m.barLoads.filter((l) => l.bar === v.id);
+        m.barLoads = m.barLoads.filter((l) => l.bar !== v.id);
+        cargas.forEach((l) => { m.barLoads.push({ ...l, bar: v1.id }, { ...l, bar: v2.id }); });
+        par.delete([v.i, v.j].sort().join("\u0000")); par.add([v1.i, v1.j].sort().join("\u0000")); par.add([v2.i, v2.j].sort().join("\u0000"));
+        diag(tb.p0, mid.id); diag(tb.q0, mid.id);
+      }
+    });
+    m.bars.forEach((b) => { if (b.diag) delete b.diag; });
+    return { tableros: tbs.length, barras: nb };
+  };
+  // filtros listos para la interfaz
+  Gen.filtroNiveles = (k0, k1) => (tb) => tb.k >= k0 && tb.k <= k1;
+  Gen.filtroLinea = function (m, eje, valor, tol = 1e-4) {
+    const nodo = {}; m.nodes.forEach((n) => (nodo[n.id] = n)); const c = eje === "X" ? "x" : "y";
+    return (tb) => Math.abs(nodo[tb.p][c] - valor) < tol && Math.abs(nodo[tb.q][c] - valor) < tol;
+  };
+  // outrigger: tableros fuera del núcleo sobre las líneas que pasan por él; con «cinturón», también el perímetro
+  Gen.filtroOutrigger = function (m, caja, cinturon) {
+    const nodo = {}; m.nodes.forEach((n) => (nodo[n.id] = n)); const per = Gen.perimetral(m), t = 1e-6;
+    const [x0, x1, y0, y1] = caja;
+    const dentro = (n) => n.x > x0 + t && n.x < x1 - t && n.y > y0 + t && n.y < y1 - t;
+    const enCaja = (n) => n.x >= x0 - t && n.x <= x1 + t && n.y >= y0 - t && n.y <= y1 + t;
+    return (tb) => {
+      const p = nodo[tb.p], q = nodo[tb.q];
+      if (cinturon && per(tb)) return true;
+      if (dentro(p) || dentro(q) || (enCaja(p) && enCaja(q))) return false;
+      if (Math.abs(p.y - q.y) < t) return p.y >= y0 - t && p.y <= y1 + t;   // viga en X sobre una línea que cruza el núcleo
+      if (Math.abs(p.x - q.x) < t) return p.x >= x0 - t && p.x <= x1 + t;
+      return false;
+    };
+  };
+
+  // ---------- pegar desde Excel (texto separado por tabuladores, punto y coma o comas) ----------
+  const filas = (txt) => {
+    const ls = String(txt || "").replace(/\r/g, "").split("\n").map((l) => l.replace(/\s+$/, "")).filter((l) => l.trim());
+    const sep = ls.some((l) => l.includes("\t")) ? "\t" : ls.some((l) => l.includes(";")) ? ";" : ",";
+    return ls.map((l) => l.split(sep).map((c) => c.trim().replace(/^"(.*)"$/, "$1")));
+  };
+  const num = (s) => { const t = String(s).replace(/\s/g, ""); return t === "" ? NaN : Number(t.replace(/^(-?\d*),(\d+)$/, "$1.$2")); };
+  const restr = (s) => { const t = String(s == null ? "" : s).trim().toLowerCase();
+    if (["1", "si", "sí", "yes", "y", "x", "true", "r"].includes(t)) return 1; return 0; };
+  Gen.pegarNudos = function (txt) {
+    const out = [];
+    filas(txt).forEach((c, i) => {
+      if (c.length < 4) err(`Renglón ${i + 1}: se esperan al menos 4 columnas (nudo, X, Y, Z).`);
+      const [x, y, z] = [num(c[1]), num(c[2]), num(c[3])];
+      if (![x, y, z].every(isFinite)) { if (i === 0) return; err(`Renglón ${i + 1}: las coordenadas no son números.`); }   // encabezado
+      let r = [0, 0, 0, 0, 0, 0];
+      if (c.length >= 10) r = c.slice(4, 10).map(restr);
+      else if (c[4]) { const t = c[4].toLowerCase(); if (/^(emp|fix|e$)/.test(t)) r = [1, 1, 1, 1, 1, 1]; else if (/^(art|pin|a$)/.test(t)) r = [1, 1, 1, 0, 0, 0]; }
+      out.push({ id: c[0], x, y, z, r });
+    });
+    if (!out.length) err("No encontré renglones con nudos.");
+    return out;
+  };
+  Gen.pegarBarras = function (txt) {
+    const out = [], Core = root.Core || require("../core/core.js");
+    filas(txt).forEach((c, i) => {
+      if (c.length < 4) err(`Renglón ${i + 1}: se esperan al menos 4 columnas (barra, A, B, sección).`);
+      if (i === 0 && /barra|frame|elem/i.test(c[0]) && /^(a|i|inicio|joint ?i|nudo ?a)$/i.test(c[1])) return;   // encabezado
+      const b = { id: c[0], i: c[1], j: c[2], sec: c[3], ang: c[4] ? num(c[4]) : 0 };
+      if (!isFinite(b.ang)) err(`Renglón ${i + 1}: el giro no es un número.`);
+      if (c[5]) { Core.leerLib(c[5]); b.libA = Core.leerLib(c[5]).join(" ") || undefined; }
+      if (c[6]) { Core.leerLib(c[6]); b.libB = Core.leerLib(c[6]).join(" ") || undefined; }
+      Object.keys(b).forEach((k) => b[k] === undefined && delete b[k]);
+      out.push(b);
+    });
+    if (!out.length) err("No encontré renglones con barras.");
+    return out;
+  };
+
+  if (typeof module !== "undefined" && module.exports) module.exports = Gen; else root.Gen = Gen;
+})(this);
+
+/* Marco3D — ejemplos de edificios idealizados como marcos 3D (v0.7).
+   Son modelos DIDÁCTICOS: las dimensiones que no son públicas se suponen y las cargas son ilustrativas.
+   No representan la estructura real ni sirven para evaluar su seguridad. */
+(function (root) {
+  "use strict";
+  const Gen = root.Gen || require("./generar.js");
+  const Ej = {};
+  const E = 2213594, G = 885437.6;   // concreto f'c = 250 kg/cm² (un solo material por modelo)
+  const n = 2.04e7 / E;              // relación modular acero/concreto para secciones transformadas
+  const r6 = (v) => +(+v).toFixed(6);
+
+  // ---------- Edificio CFE, Paseo de la Reforma 164 (82 m, 23 niveles) ----------
+  Ej.cfe = function () {
+    const m = Gen.ortogonal({ xs: Gen.lista("4@6"), ys: Gen.lista("3@6"), hs: Gen.lista("4.5, 22@3.5"), col: [.9, .9], vig: [.4, .8], E, G, w: 3, Fx: 12, Fy: 8,
+      tramos: [{ desde: 1, hasta: 8, col: [.9, .9], vig: [.4, .8] }, { desde: 9, hasta: 16, col: [.75, .75], vig: [.4, .75] }, { desde: 17, hasta: 23, col: [.6, .6], vig: [.35, .7] }] });
+    m.nombre = "Edificio CFE · Reforma 164 (idealizado como marco 3D)";
+    m.ejemplo = { id: "cfe", titulo: "Edificio CFE · Reforma 164" };
+    return m;
+  };
+
+  // ---------- Torre HSBC, Paseo de la Reforma 347 ----------
+  // marcos rígidos ortogonales (vigas de acero, columnas compuestas) + núcleo de concreto
+  Ej.hsbc = function () {
+    const m = Gen.ortogonal({ xs: Gen.lista("5@8"), ys: Gen.lista("3@8"), hs: Gen.lista("6, 30@4.17"), col: [1.1, 1.1], vig: [.4, .8], E, G, w: 3.5, Fx: 15, Fy: 10,
+      tramos: [{ desde: 1, hasta: 10, col: [1.1, 1.1], vig: [.4, .8] }, { desde: 11, hasta: 20, col: [.95, .95], vig: [.4, .8] }, { desde: 21, hasta: 31, col: [.8, .8], vig: [.4, .8] }] });
+    // vigas de acero IPR 610 (W24×76) como sección transformada a concreto: A·n, I·n, J·n
+    const W = { A: 0.00910, Ix: 8.74e-4, Iy: 3.43e-5, J: 1.12e-6, bf: 0.228, d: 0.607 };
+    m.sections = m.sections.filter((s) => !s.id.startsWith("V"));
+    m.sections.push({ id: "IPR610-transf", auto: false, b: W.bf, h: W.d, A: r6(W.A * n), Iy: +(W.Ix * n).toPrecision(6), Iz: +(W.Iy * n).toPrecision(6), J: +(W.J * n).toPrecision(6) });
+    m.bars.forEach((b) => { if (b.sec.startsWith("V")) b.sec = "IPR610-transf"; });
+    // núcleo de concreto entre los ejes X 3–4 y Y 2–3 (16 ≤ x ≤ 24, 8 ≤ y ≤ 16), con diagonales que dan la rigidez de los muros
+    Gen.fusionar(m, Gen.nucleo({ x0: 16, y0: 8, bx: 8, by: 8, nx: 1, ny: 1, zs: Gen.niveles(m), col: [1.2, 1.2], vig: [.5, 1.2], diag: [.6, .6], E, G }), 1e-6, true);
+    m.nombre = "Torre HSBC · Reforma 347 (idealizada como marco 3D)";
+    m.ejemplo = { id: "hsbc", titulo: "Torre HSBC · Reforma 347" };
+    return m;
+  };
+
+  // ---------- Torre de Shanghái (632 m, 128 niveles, 9 zonas) ----------
+  // núcleo + supercolumnas + cinturones dobles en cada zona + outriggers; niveles agrupados en «macroniveles»
+  Ej.shanghai = function () {
+    const zonas = 9, porZona = 3, Ht = 632, nP = zonas * porZona, dz = Ht / nP;
+    const R0 = 30, R1 = 20, c = 12;   // radio de las supercolumnas (base → azotea) y semilado del núcleo (supuestos)
+    const m = { nombre: "Torre de Shanghái (idealizada como marco 3D)", ejemplo: { id: "shanghai", titulo: "Torre de Shanghái" },
+      material: { E, G }, sections: [], nodes: [], bars: [], nodeLoads: [], barLoads: [] };
+    const sec = (id, b, h) => { if (!m.sections.some((s) => s.id === id)) m.sections.push({ id, b, h, auto: true }); return id; };
+    // ángulos de las 12 columnas perimetrales: dos supercolumnas en cada extremo de los ejes y cuatro en las diagonales
+    const ang = []; [0, 90, 180, 270].forEach((a) => ang.push(a - 14, a + 14)); [45, 135, 225, 315].forEach((a) => ang.push(a));
+    ang.sort((a, b) => ((a + 360) % 360) - ((b + 360) % 360));
+    const nuc = [[-c, -c], [0, -c], [c, -c], [c, 0], [c, c], [0, c], [-c, c], [-c, 0]];
+    const z = (k) => r6(k * dz), emp = (k) => (k === 0 ? [1, 1, 1, 1, 1, 1] : [0, 0, 0, 0, 0, 0]);
+    for (let k = 0; k <= nP; k++) {
+      const R = R0 + (R1 - R0) * k / nP;
+      ang.forEach((a, i) => m.nodes.push({ id: `SP${k}_${i}`, x: r6(R * Math.cos(a * Math.PI / 180)), y: r6(R * Math.sin(a * Math.PI / 180)), z: z(k), r: emp(k) }));
+      nuc.forEach(([x, y], i) => m.nodes.push({ id: `SC${k}_${i}`, x, y, z: z(k), r: emp(k) }));
+    }
+    let nb = 0; const bar = (i, j, s) => { m.bars.push({ id: `B${++nb}`, i, j, sec: s, ang: 0 }); return `B${nb}`; };
+    const w = 20, carga = (b) => m.barLoads.push({ bar: b, dir: "GZ", w: -w });
+    const cerca = (a) => { const t = a * Math.PI / 180, p = [Math.cos(t), Math.sin(t)];
+      let best = 0, bd = -Infinity; nuc.forEach(([x, y], i) => { const d = (x * p[0] + y * p[1]) / Math.hypot(x, y); if (d > bd + 1e-9) { bd = d; best = i; } }); return best; };
+    for (let k = 1; k <= nP; k++) {
+      const zona = Math.ceil(k / porZona), tr = zona <= 3 ? 0 : zona <= 6 ? 1 : 2;
+      const sCol = sec(["SC400x400", "SC320x320", "SC240x240"][tr], [4, 3.2, 2.4][tr], [4, 3.2, 2.4][tr]);
+      const sNuc = sec("NUC200x200", 2, 2), sNv = sec("NV100x200", 1, 2), sNd = sec("ND100x100", 1, 1);
+      const sAn = sec("AN100x150", 1, 1.5), sRa = sec("RA80x150", .8, 1.5);
+      ang.forEach((_, i) => bar(`SP${k - 1}_${i}`, `SP${k}_${i}`, sCol));
+      nuc.forEach((_, i) => bar(`SC${k - 1}_${i}`, `SC${k}_${i}`, sNuc));
+      nuc.forEach((_, i) => { const j = (i + 1) % 8; bar(`SC${k}_${i}`, `SC${k}_${j}`, sNv);
+        m.bars.push({ id: `B${++nb}`, i: `SC${k - 1}_${i}`, j: `SC${k}_${j}`, sec: sNd, ang: 0, libA: "T My Mz", libB: "My Mz" });
+        m.bars.push({ id: `B${++nb}`, i: `SC${k - 1}_${j}`, j: `SC${k}_${i}`, sec: sNd, ang: 0, libA: "T My Mz", libB: "My Mz" }); });
+      ang.forEach((a, i) => { carga(bar(`SP${k}_${i}`, `SP${k}_${(i + 1) % ang.length}`, sAn)); carga(bar(`SC${k}_${cerca(a)}`, `SP${k}_${i}`, sRa)); });
+      m.nodeLoads.push(...ang.map((_, i) => ({ node: `SP${k}_${i}`, F: [150 / 20, 0, 0, 0, 0, 0] })), ...nuc.map((_, i) => ({ node: `SC${k}_${i}`, F: [150 / 20, 0, 0, 0, 0, 0] })));
+    }
+    // cinturón doble: diagonales en X en el anillo del último macronivel de cada zona
+    const per = (tb) => tb.p.startsWith("SP") && tb.q.startsWith("SP");
+    Gen.arriostrar(m, { tipo: "X", sec: [1.2, 1.2], prefijo: "CIN", filtro: (tb) => tb.k % porZona === 0 && per(tb) });
+    // outriggers: diagonales en los tableros radiales (núcleo–supercolumna) en las zonas 2, 4, 6 y 8 (supuesto)
+    const rad = (tb) => (tb.p.startsWith("SC") && tb.q.startsWith("SP")) || (tb.p.startsWith("SP") && tb.q.startsWith("SC"));
+    Gen.arriostrar(m, { tipo: "X", sec: [1.5, 1.5], prefijo: "OUT", filtro: (tb) => rad(tb) && [2, 4, 6, 8].includes(tb.k / porZona) });
+    return m;
+  };
+
+  // ---------- fichas para el aviso emergente ----------
+  const src = (t, u) => ({ t, u });
+  Ej.lista = [
+    { id: "cfe", titulo: "Edificio CFE · Reforma 164", crear: () => Ej.cfe(),
+      datos: ["Paseo de la Reforma 164, Col. Juárez, en la Glorieta de Cuauhtémoc; oficinas de la Comisión Federal de Electricidad.",
+        "Altura ≈ 82 m y 23 niveles; edificio moderno de concreto, acero y vidrio."],
+      modelo: ["Marco rígido ortogonal de 4 × 3 crujías de 6 m (24 × 18 m) y 23 niveles (4.5 m + 22 × 3.5 m = 81.5 m).",
+        "Columnas de concreto por tramos: 90 × 90 (niveles 1–8), 75 × 75 (9–16) y 60 × 60 cm (17–23).",
+        "Carga gravitacional de 3 t/m en vigas y fuerzas laterales ilustrativas de 12 t (X) y 8 t (Y) por nivel."],
+      supuestos: "La planta, los claros y las secciones son supuestos: no se publicaron los planos estructurales.",
+      fuentes: [src("The Skyscraper Center (CTBUH): Reforma 164", "https://www.skyscrapercenter.com/building/reforma-164/22226"), src("EDEMX: Reforma 164", "https://www.edemx.com/site/reforma-164/")] },
+    { id: "hsbc", titulo: "Torre HSBC · Reforma 347", crear: () => Ej.hsbc(),
+      datos: ["Paseo de la Reforma 347, frente al Ángel de la Independencia; terminada en 2006.",
+        "Altura 131 m y 31 niveles según el CTBUH (otras fuentes dan 136 m y 36 niveles al contar el estacionamiento).",
+        "Estructura: marcos rígidos ortogonales de vigas de acero y columnas compuestas, con núcleo rígido de concreto para elevadores y escaleras.",
+        "Se reportan 76 amortiguadores y 127 pilotes de acero y concreto a unos 55 m de profundidad."],
+      modelo: ["Marcos de 5 × 3 crujías de 8 m (40 × 24 m) y 31 niveles (6 m + 30 × 4.17 m ≈ 131 m).",
+        "Vigas IPR 610 (W24×76) como sección transformada a concreto (A, I y J multiplicados por n = E_acero/E_concreto ≈ 9.2), porque el programa usa un solo material.",
+        "Columnas compuestas idealizadas como columnas de concreto equivalentes por tramos (110, 95 y 80 cm).",
+        "Núcleo de 8 × 8 m al centro, con columnas y vigas peraltadas y diagonales articuladas que dan la rigidez de sus muros (analogía de armadura)."],
+      supuestos: "La planta, los claros, las secciones y la posición del núcleo son supuestos. Los amortiguadores no se modelan (el análisis es estático lineal).",
+      fuentes: [src("The Skyscraper Center (CTBUH): Torre HSBC", "https://www.skyscrapercenter.com/building/torre-hsbc/4533"), src("Wikipedia: HSBC Tower, Mexico City", "https://en.wikipedia.org/wiki/Torre_HSBC"),
+        src("Urbipedia: Torre HSBC", "https://www.urbipedia.org/hoja/Torre_HSBC"), src("Tesis UNAM (análogos: Torre HSBC)", "https://ru.dgb.unam.mx/jspui/bitstream/20.500.14330/TES01000758418/3/0758418.pdf")] },
+    { id: "shanghai", titulo: "Torre de Shanghái", crear: () => Ej.shanghai(),
+      datos: ["632 m y 128 niveles; diseño de Gensler, ingeniería estructural de Thornton Tomasetti.",
+        "Sistema «núcleo – outriggers – megamarco»: núcleo de concreto de unos 30 m por lado, supercolumnas (dos en cada extremo de los ejes ortogonales y cuatro en las diagonales), cinturones dobles en cada una de las 9 zonas y outriggers.",
+        "La fachada exterior gira 120° (alrededor de 1° por nivel) y cuelga de los pisos mecánicos; la planta estructural es circular y se reduce de zona en zona."],
+      modelo: ["9 zonas de 3 «macroniveles» (27 niveles de 23.4 m): cada macronivel agrupa unos 4–5 pisos reales; las vigas representan el conjunto de losas y vigas.",
+        "12 columnas perimetrales en un círculo cuyo radio baja de 30 a 20 m (columnas inclinadas) y núcleo de 24 × 24 m con diagonales en los muros.",
+        "Cinturón (diagonales en X en todo el anillo) en el último macronivel de cada zona; outriggers en las zonas 2, 4, 6 y 8.",
+        "Supercolumnas de concreto equivalentes de 4.0, 3.2 y 2.4 m por grupos de zonas; carga de 20 t/m en vigas y 150 t laterales por macronivel (ilustrativas)."],
+      supuestos: "Los radios, el tamaño del núcleo, las secciones, las zonas con outrigger y las cargas son supuestos. La fachada torcida no se modela: es estructura secundaria colgada; el giro de 120° no está en la estructura principal.",
+      fuentes: [src("AISC Modern Steel Construction (2013): Shanghai Tower", "https://www.aisc.org/globalassets/modern-steel/archives/2013/04/2013v04_shanghai.pdf"),
+        src("The Skyscraper Museum: Shanghai Tower", "https://old.skyscraper.org/EXHIBITIONS/TEN_TOPS/shanghaitower.php"), src("ENR: Sheer Innovation", "https://enr.com/articles/451-sheer-innovation?page=2")] },
+  ];
+  Ej.limitaciones = [
+    "Solo barras (elementos tipo marco): los muros, las losas y las armaduras se representan con columnas, vigas y diagonales equivalentes.",
+    "Sin diafragma rígido: la carga lateral se reparte en partes iguales entre los nudos de cada nivel.",
+    "Análisis estático lineal de primer orden: sin P-Δ, sin análisis dinámico ni espectro sísmico, sin interacción suelo-estructura (base empotrada).",
+    "Un solo material (concreto); el acero entra como sección transformada.",
+    "Las cargas son ilustrativas: no salen de un análisis de cargas ni de las Normas Técnicas.",
+  ];
+  Ej.porId = (id) => Ej.lista.find((e) => e.id === id);
+
+  if (typeof module !== "undefined" && module.exports) module.exports = Ej; else root.Ejemplos = Ej;
+})(this);
+
+/* Marco3D — interfaz (tablas, visor 3D, resultados). Usa Core, Modelos y S2K. */
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const COMP = ["Ux", "Uy", "Uz", "Rx", "Ry", "Rz"];
+  const GDLN = ["d<sub>x</sub>", "d<sub>y</sub>", "d<sub>z</sub>", "φ<sub>x</sub>", "φ<sub>y</sub>", "φ<sub>z</sub>"];
+  const ENAMES = ["θ<sub>1y'</sub>", "θ<sub>2y'</sub>", "θ<sub>3y'</sub>", "θ<sub>1z'</sub>", "θ<sub>2z'</sub>", "θ<sub>3z'</sub>", "δ", "θ<sub>T</sub>"];
+  const PNAMES = ["M<sub>1y'</sub>", "M<sub>2y'</sub>", "M<sub>3y'</sub>", "M<sub>1z'</sub>", "M<sub>2z'</sub>", "M<sub>3z'</sub>", "N", "M<sub>T</sub>"];
+  const FNAMES = ["F<sub>x'A</sub>", "F<sub>y'A</sub>", "F<sub>z'A</sub>", "M<sub>x'A</sub>", "M<sub>y'A</sub>", "M<sub>z'A</sub>", "F<sub>x'B</sub>", "F<sub>y'B</sub>", "F<sub>z'B</sub>", "M<sub>x'B</sub>", "M<sub>y'B</sub>", "M<sub>z'B</sub>"];
+  const DIRS = { GX: "Global X", GY: "Global Y", GZ: "Global Z", LX: "Local x'", LY: "Local y'", LZ: "Local z'" };
+
+  let M = null, RES = null, ERR = null, selBar = null, picked = false;
+
+  // ---------- formato ----------
+  function f(v, d = 4) {
+    if (v == null || isNaN(v)) return "—";
+    const a = Math.abs(v);
+    if (a < 1e-10) return "0";
+    let s;
+    if (a >= 1e6 || a < 1e-4) s = a.toExponential(3);
+    else s = a.toFixed(a >= 1000 ? 2 : d);
+    return (v < 0 ? "−" : "") + s;
+  }
+  const fe = (v) => (Math.abs(v) < 1e-300 ? "0" : v.toExponential(1));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- persistencia ----------
+  function guardarLocal() { try { localStorage.setItem("marco3d_modelo", JSON.stringify(M)); } catch (e) { /* sin almacenamiento */ } }
+  function cargarLocal() { try { const s = localStorage.getItem("marco3d_modelo"); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function descargar(nombre, texto, tipo) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([texto], { type: tipo || "text/plain" }));
+    a.download = nombre; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  // ---------- pestañas ----------
+  function tabs(barId) {
+    const bar = $(barId);
+    bar.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-p]"); if (!b) return;
+      bar.querySelectorAll("button[data-p]").forEach((x) => { x.classList.toggle("on", x === b); $(x.dataset.p).hidden = x !== b; });
+    });
+  }
+  function irTab(barId, paneId) { const b = $(barId).querySelector(`[data-p="${paneId}"]`); if (b) b.click(); }
+
+  // ---------- editor de tablas ----------
+  function tablaEditable(cont, titulo, filas, cols, nuevo, hint, key, buscar) {
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `<h3>${titulo}</h3>${hint ? `<div class="hint">${hint}</div>` : ""}`;
+    let vis = filas;
+    if (key) {
+      const txt = (filtro[key] || "").trim().toLowerCase();
+      const lista = txt && buscar ? filas.filter((r) => buscar(r).toLowerCase().includes(txt)) : filas;
+      const np = Math.max(1, Math.ceil(lista.length / PAG)); pag[key] = Math.min(pag[key] || 0, np - 1); const p = pag[key];
+      vis = lista.slice(p * PAG, (p + 1) * PAG); repintar[key] = renderSide;
+      if (filas.length > PAG || txt) { const nav = document.createElement("div"); nav.className = "row pagnav";
+        nav.innerHTML = `${buscar ? `<input class="buscar" data-filt="${key}" placeholder="Buscar…" value="${esc(filtro[key] || "")}">` : ""}<button data-pg="${key}" data-d="-1" ${p ? "" : "disabled"}>‹</button><span>${lista.length ? p * PAG + 1 : 0}–${Math.min((p + 1) * PAG, lista.length)} de ${lista.length}</span><button data-pg="${key}" data-d="1" ${p < np - 1 ? "" : "disabled"}>›</button>`;
+        wrap.appendChild(nav); }
+    }
+    const t = document.createElement("table"); t.className = "ed";
+    t.innerHTML = "<thead><tr>" + cols.map((c) => `<th title="${esc(c.tip || "")}">${c.h}</th>`).join("") + "<th></th></tr></thead>";
+    const tb = document.createElement("tbody");
+    vis.forEach((row) => {
+      const tr = document.createElement("tr");
+      cols.forEach((c) => {
+        const td = document.createElement("td");
+        if (c.ro) { td.className = "ro"; td.innerHTML = c.ro(row); }
+        else if (c.type === "check") {
+          td.className = "c"; const i = document.createElement("input"); i.type = "checkbox"; i.checked = !!c.get(row);
+          i.onchange = () => { c.set(row, i.checked ? 1 : 0); cambio(); }; td.appendChild(i);
+        } else if (c.type === "ref") {
+          const i = document.createElement("input"); i.type = "text"; i.value = c.get(row); i.setAttribute("list", c.list); i.spellcheck = false;
+          i.onchange = () => { const v = i.value.trim(); if (!c.existe(v)) { status(`«${v}» no existe`, true); i.value = c.get(row); return; } c.set(row, v); cambio(); };
+          td.appendChild(i);
+        } else if (c.type === "select") {
+          const s = document.createElement("select"); if (c.cls) s.className = c.cls;
+          c.opts().forEach(([v, l]) => { const o = document.createElement("option"); o.value = v; o.textContent = l; s.appendChild(o); });
+          s.value = c.get(row); s.onchange = () => { c.set(row, s.value); cambio(); }; td.appendChild(s);
+        } else {
+          const i = document.createElement("input"); i.type = "text"; i.value = c.get(row); i.spellcheck = false;
+          if (c.dis && c.dis(row)) { i.disabled = true; td.className = "ro"; }
+          i.onchange = () => { const v = c.num ? (i.value.trim() === "" ? 0 : Number(i.value.replace(",", "."))) : i.value.trim(); if (c.num && isNaN(v)) { i.value = c.get(row); return; } c.set(row, v); cambio(c.rerender); };
+          td.appendChild(i);
+        }
+        tr.appendChild(td);
+      });
+      const td = document.createElement("td"); const d = document.createElement("button"); d.className = "del"; d.textContent = "✕"; d.title = "Eliminar";
+      d.onclick = () => { const ri = filas.indexOf(row); if (ri >= 0) filas.splice(ri, 1); cambio(true); }; td.appendChild(d); tr.appendChild(td);
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); wrap.appendChild(t);
+    const add = document.createElement("div"); add.className = "row";
+    const b = document.createElement("button"); b.textContent = "+ Agregar"; b.onclick = () => { filas.push(nuevo()); cambio(true); };
+    add.appendChild(b); wrap.appendChild(add);
+    cont.appendChild(wrap);
+  }
+  const LIBS = [["", "—"], ["My Mz", "My Mz"], ["My", "My"], ["Mz", "Mz"], ["T", "T"], ["T My", "T My"], ["T Mz", "T Mz"], ["T My Mz", "T My Mz"]];
+  const libCanon = (t) => { try { return Core.leerLib(t).join(" "); } catch (e) { return ""; } };
+  const setLib = (r, k, v) => { if (v) r[k] = v; else delete r[k]; };
+  const nextId = (arr, pref) => { let k = arr.length + 1; while (arr.some((x) => x.id === pref + k)) k++; return pref + k; };
+
+  function datalist(id, valores) {
+    let dl = document.getElementById(id);
+    if (!dl) { dl = document.createElement("datalist"); dl.id = id; document.body.appendChild(dl); }
+    dl.textContent = ""; const fr = document.createDocumentFragment();
+    valores.forEach((v) => { const o = document.createElement("option"); o.value = v; fr.appendChild(o); }); dl.appendChild(fr);
+  }
+  function renderSide() {
+    datalist("dlNodos", M.nodes.map((n) => n.id)); datalist("dlBarras", M.bars.map((b) => b.id));
+    const nodoMap = {}; M.nodes.forEach((n) => (nodoMap[n.id] = n)); const barSet = new Set(M.bars.map((b) => b.id));
+    const existeN = (v) => !!nodoMap[v], existeB = (v) => barSet.has(v);
+    // Nudos
+    const pN = $("pNudos"); pN.innerHTML = "";
+    const rc = (k) => ({ h: COMP[k], type: "check", get: (r) => r.r[k], set: (r, v) => (r.r[k] = v), tip: "Marcado = restringido" });
+    tablaEditable(pN, `Nudos (${M.nodes.length})`, M.nodes, [
+      { h: "Nudo", get: (r) => r.id, set: (r, v) => renombrarNudo(r, v), rerender: true },
+      { h: "X", num: 1, get: (r) => r.x, set: (r, v) => (r.x = v) }, { h: "Y", num: 1, get: (r) => r.y, set: (r, v) => (r.y = v) }, { h: "Z", num: 1, get: (r) => r.z, set: (r, v) => (r.z = v) },
+      rc(0), rc(1), rc(2), rc(3), rc(4), rc(5)],
+      () => ({ id: nextId(M.nodes, "N"), x: 0, y: 0, z: 0, r: [0, 0, 0, 0, 0, 0] }),
+      "Coordenadas en m (Z vertical). Las casillas marcan los desplazamientos restringidos: las seis marcadas = empotramiento; ninguna = nudo libre.", "edN", (r) => r.id);
+    pegarUI(pN, "nudos");
+    // Barras
+    const pB = $("pBarras"); pB.innerHTML = "";
+    tablaEditable(pB, `Barras (${M.bars.length})`, M.bars, [
+      { h: "Barra", get: (r) => r.id, set: (r, v) => renombrarBarra(r, v), rerender: true },
+      { h: "A (inicio)", type: "ref", list: "dlNodos", existe: existeN, get: (r) => r.i, set: (r, v) => (r.i = v) },
+      { h: "B (fin)", type: "ref", list: "dlNodos", existe: existeN, get: (r) => r.j, set: (r, v) => (r.j = v) },
+      { h: "Sección", type: "select", opts: () => M.sections.map((s) => [s.id, s.id]), get: (r) => r.sec, set: (r, v) => (r.sec = v) },
+      { h: "Giro y' [°]", num: 1, get: (r) => r.ang || 0, set: (r, v) => (r.ang = v), tip: "Giro adicional del eje y' alrededor de x'. 0 = regla del nudo auxiliar del curso" },
+      { h: "Lib. A", type: "select", cls: "lib", opts: () => LIBS, get: (r) => libCanon(r.libA), set: (r, v) => setLib(r, "libA", v), tip: "Liberaciones (articulación) en el extremo A. My = M2 y Mz = M3 de SAP2000" },
+      { h: "Lib. B", type: "select", cls: "lib", opts: () => LIBS, get: (r) => libCanon(r.libB), set: (r, v) => setLib(r, "libB", v), tip: "Liberaciones (articulación) en el extremo B" },
+      { h: "L [m]", ro: (r) => { const a = nodoMap[r.i], b = nodoMap[r.j]; return a && b ? f(Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z), 3) : "—"; } }],
+      () => ({ id: nextId(M.bars, ""), i: M.nodes[0] ? M.nodes[0].id : "", j: M.nodes[1] ? M.nodes[1].id : "", sec: M.sections[0] ? M.sections[0].id : "", ang: 0 }),
+      "Lib. A / Lib. B: momentos liberados en ese extremo (My = giro alrededor de y', Mz = alrededor de z', T = torsión); «My Mz» = articulación. La torsión solo puede liberarse en un extremo. x' va de A hacia B. Ejes locales con la regla del curso: barra vertical U<sub>y'</sub> = (1, 0, 0); otras barras U<sub>y'</sub> horizontal (U<sub>y'z</sub> = 0); U<sub>z'</sub> = U<sub>x'</sub> × U<sub>y'</sub>.", "edB", (r) => `${r.id} ${r.i} ${r.j} ${r.sec}`);
+    pegarUI(pB, "barras");
+    // Secciones y material
+    const pS = $("pSecc"); pS.innerHTML = "";
+    const mat = document.createElement("div");
+    mat.innerHTML = `<h3>Material</h3><div class="form"><label>E [t/m²]<input id="iE"></label><label>G [t/m²]<input id="iG"></label></div>
+      <div class="hint">El ejemplo del curso usa E = 1 y G = 0.4E (desplazamientos en unidades de 1/E). Para concreto f'c = 250 kg/cm²: E ≈ 2 213 594 t/m², G ≈ 0.4E.</div>`;
+    pS.appendChild(mat);
+    $("iE").value = String(M.material.E); $("iG").value = String(M.material.G);
+    const numIn = (el, k) => (el.onchange = () => { const v = Number(String(el.value).replace(",", ".")); if (!isFinite(v) || String(el.value).trim() === "") { el.value = String(M.material[k]); status(`${k} debe ser un número`, true); return; } M.material[k] = v; cambio(); });
+    numIn($("iE"), "E"); numIn($("iG"), "G");
+    const calc = (s) => (s.auto !== false ? Core.seccionRect(+s.b, +s.h) : s);
+    tablaEditable(pS, "Secciones", M.sections, [
+      { h: "Nombre", get: (r) => r.id, set: (r, v) => renombrarSeccion(r, v), rerender: true },
+      { h: "b (en y')", num: 1, get: (r) => r.b, set: (r, v) => (r.b = v), rerender: true }, { h: "h (en z')", num: 1, get: (r) => r.h, set: (r, v) => (r.h = v), rerender: true },
+      { h: "Rect.", type: "check", get: (r) => r.auto !== false, set: (r, v) => { r.auto = !!v; if (!v) Object.assign(r, Core.seccionRect(+r.b, +r.h)); renderSide(); }, tip: "Calcular A, Iy', Iz', J como rectángulo" },
+      { h: "A", num: 1, get: (r) => +calc(r).A.toPrecision(6), set: (r, v) => (r.A = v), dis: (r) => r.auto !== false },
+      { h: "I<sub>y'</sub>", num: 1, get: (r) => +calc(r).Iy.toPrecision(6), set: (r, v) => (r.Iy = v), dis: (r) => r.auto !== false },
+      { h: "I<sub>z'</sub>", num: 1, get: (r) => +calc(r).Iz.toPrecision(6), set: (r, v) => (r.Iz = v), dis: (r) => r.auto !== false },
+      { h: "J", num: 1, get: (r) => +calc(r).J.toPrecision(6), set: (r, v) => (r.J = v), dis: (r) => r.auto !== false }],
+      () => ({ id: nextId(M.sections, "S"), b: 0.3, h: 0.5, auto: true }),
+      "Dimensiones en m. I<sub>y'</sub> = b·h³/12 (flexión en el plano x'z'), I<sub>z'</sub> = h·b³/12, J de Saint-Venant para rectángulo. Desmarca «Rect.» para capturar propiedades a mano.");
+    // Cargas
+    const pC = $("pCargas"); pC.innerHTML = "";
+    const lc = (k, lab) => ({ h: lab, num: 1, get: (r) => r.F[k], set: (r, v) => (r.F[k] = v) });
+    tablaEditable(pC, "Cargas en nudos (ejes globales)", M.nodeLoads, [
+      { h: "Nudo", type: "ref", list: "dlNodos", existe: existeN, get: (r) => r.node, set: (r, v) => (r.node = v) },
+      lc(0, "F<sub>X</sub>"), lc(1, "F<sub>Y</sub>"), lc(2, "F<sub>Z</sub>"), lc(3, "M<sub>X</sub>"), lc(4, "M<sub>Y</sub>"), lc(5, "M<sub>Z</sub>")],
+      () => ({ node: M.nodes[0] ? M.nodes[0].id : "", F: [0, 0, 0, 0, 0, 0] }), "Fuerzas en t y momentos en t·m, con signo según los ejes globales.", "edCN", (r) => r.node);
+    tablaEditable(pC, "Cargas uniformes en barras", M.barLoads, [
+      { h: "Barra", type: "ref", list: "dlBarras", existe: existeB, get: (r) => r.bar, set: (r, v) => (r.bar = v) },
+      { h: "Dirección", type: "select", opts: () => Object.entries(DIRS), get: (r) => r.dir, set: (r, v) => (r.dir = v) },
+      { h: "w [t/m]", num: 1, get: (r) => r.w, set: (r, v) => (r.w = v) }],
+      () => ({ bar: M.bars[0] ? M.bars[0].id : "", dir: "GZ", w: -1 }),
+      "w con signo: una carga gravitacional es w &lt; 0 en dirección Global Z. Las cargas globales se aplican por unidad de longitud de la barra. Generan el Estado I (fuerzas de empotramiento).", "edCB", (r) => r.bar);
+    renderPlantilla();
+  }
+  // pegar renglones copiados de Excel en la tabla de nudos o de barras
+  const pegarAbierto = {};
+  function pegarUI(cont, tipo) {
+    const d = document.createElement("details"); d.className = "pegar"; d.open = !!pegarAbierto[tipo];
+    d.ontoggle = () => (pegarAbierto[tipo] = d.open);
+    const ej = tipo === "nudos" ? "N1\t0\t0\t0\temp\nN2\t6\t0\t0\nN3\t6\t0\t3.5" : "B1\tN1\tN2\tV30x60\nB2\tN2\tN3\tC40x40\t0\t\tMy Mz";
+    const cols = tipo === "nudos" ? "nudo, X, Y, Z y, opcional, «emp» (empotrado), «art» (articulado) o seis columnas Ux…Rz con 1/0"
+      : "barra, nudo A, nudo B, sección y, opcionales, giro y' [°], Lib. A y Lib. B (p. ej. «My Mz»)";
+    d.innerHTML = `<summary>Pegar desde Excel…</summary><div class="hint">Copia los renglones en Excel y pégalos aquí. Columnas: ${cols}. Se aceptan tabuladores, punto y coma o comas; un renglón de encabezado se ignora.</div>
+      <textarea rows="5" class="pegtxt" placeholder="${ej.replace(/\t/g, "   ").replace(/\n/g, "&#10;")}"></textarea>
+      <div class="row"><button data-m="add">Agregar a la tabla</button><button data-m="rep">Reemplazar la tabla</button><span class="hint pegmsg"></span></div>`;
+    const ta = d.querySelector("textarea"), msg = d.querySelector(".pegmsg");
+    d.querySelectorAll("button[data-m]").forEach((b) => (b.onclick = () => {
+      try {
+        const nuevos = tipo === "nudos" ? Gen.pegarNudos(ta.value) : Gen.pegarBarras(ta.value);
+        const arr = tipo === "nudos" ? M.nodes : M.bars, rep = b.dataset.m === "rep";
+        const ids = new Set(rep ? [] : arr.map((x) => x.id)), dup = nuevos.find((x) => ids.has(x.id) || (ids.add(x.id), false));
+        if (dup) throw new Error(`El nombre «${dup.id}» ya existe o está repetido.`);
+        if (tipo === "barras") { const secs = new Set(M.sections.map((x) => x.id)), falt = [...new Set(nuevos.map((x) => x.sec).filter((x) => !secs.has(x)))];
+          falt.forEach((id) => { const mm = id.match(/(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i); M.sections.push({ id, b: mm ? +mm[1] / 100 : 0.3, h: mm ? +mm[2] / 100 : 0.5, auto: true }); });
+          if (falt.length) status(`Se crearon las secciones ${falt.join(", ")} (revisa sus dimensiones en «Secciones»).`, false); }
+        if (rep) arr.length = 0; nuevos.forEach((x) => arr.push(x));
+        ta.value = ""; pegarAbierto[tipo] = false; cambio(true);
+        status(`Se ${rep ? "reemplazó la tabla con" : "agregaron"} ${nuevos.length} ${tipo}.`, false);
+      } catch (e) { msg.innerHTML = `<b style="color:var(--bad)">${esc(e.message)}</b>`; }
+    }));
+    cont.appendChild(d);
+  }
+  function renombrarNudo(r, v) {
+    if (!v || M.nodes.some((n) => n !== r && n.id === v)) { status("Nombre de nudo vacío o repetido", true); return; }
+    const old = r.id; r.id = v;
+    M.bars.forEach((b) => { if (b.i === old) b.i = v; if (b.j === old) b.j = v; });
+    M.nodeLoads.forEach((l) => { if (l.node === old) l.node = v; });
+  }
+  function renombrarBarra(r, v) {
+    if (!v || M.bars.some((b) => b !== r && b.id === v)) { status("Nombre de barra vacío o repetido", true); return; }
+    const old = r.id; r.id = v; M.barLoads.forEach((l) => { if (l.bar === old) l.bar = v; });
+  }
+  function renombrarSeccion(r, v) {
+    if (!v || M.sections.some((s) => s !== r && s.id === v)) { status("Nombre de sección vacío o repetido", true); return; }
+    const old = r.id; r.id = v; M.bars.forEach((b) => { if (b.sec === old) b.sec = v; });
+  }
+
+  // ---------- generadores (pestaña «Generar») ----------
+  const PL = { nPisos: 2, h: 3, nX: 2, Lx: 5, nY: 1, Ly: 6, colB: 0.4, colH: 0.6, vigB: 0.3, vigH: 0.5, E: 2213594, G: 885438, w: 2, Fx: 5, Fy: 0 };
+  const GT = { xs: "", ys: "", hs: "", tramos: "", remet: "", volados: "" };   // campos de texto opcionales del edificio
+  const GN = { x0: 0, y0: 0, bx: 6, by: 6, nx: 1, ny: 1, colB: 0.8, colH: 0.8, vigB: 0.4, vigH: 1.2, diag: 1, dB: 0.3, dH: 0.3, hs: "" };
+  const GP = { R: "8, 20", nSeg: 16, hs: "20@4", giro: 3, escala: 0.7, centro: 0, colB: 0.7, colH: 0.7, vigB: 0.3, vigH: 0.6, radB: 0.3, radH: 0.6, w: 2, Fx: 30, Fy: 0 };
+  const GD = { tipo: "X", k0: 1, k1: 1, donde: "per", valor: 0, b: 0.3, h: 0.3, art: 1 };
+  const GO = { niveles: "", x0: 0, x1: 6, y0: 0, y1: 6, tipo: "X", cint: 1, b: 0.4, h: 0.4, art: 1 };
+  const LIM_GEN = 30000, AVISO_GEN = 10000;
+  const gdlDe = (m) => m.nodes.reduce((s, n) => s + n.r.filter((v) => !v).length, 0);
+  function renderPlantilla() {
+    const p = $("pPlant");
+    const campo = (k, lab) => `<label>${lab}<input data-k="${k}" value="${PL[k]}"></label>`;
+    const cT = (k, lab, ph) => `<label>${lab}<input data-t="${k}" value="${esc(GT[k])}" placeholder="${ph}"></label>`;
+    const aT = (k, lab, ph) => `<label class="ancho">${lab}<textarea data-t="${k}" rows="2" placeholder="${ph}">${esc(GT[k])}</textarea></label>`;
+    const c = (obj, g, k, lab, ph = "") => `<label>${lab}<input data-o="${g}" data-k2="${k}" value="${esc(obj[k])}" placeholder="${ph}"></label>`;
+    const ch = (obj, g, k, lab) => `<label class="chk"><input type="checkbox" data-o="${g}" data-k2="${k}" ${obj[k] ? "checked" : ""}> ${lab}</label>`;
+    const sel = (obj, g, k, lab, ops) => `<label>${lab}<select data-o="${g}" data-k2="${k}">${ops.map(([v, l]) => `<option value="${v}" ${String(obj[k]) === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>`;
+    const zs = M ? Gen.niveles(M) : [];
+    p.innerHTML = `<h3>Generar</h3>
+      <div class="hint">Los generadores crean nudos y barras comunes (todo sigue siendo un marco 3D) en las mismas tablas; después puedes editar cualquier cosa a mano. «Nuevo modelo» reemplaza el actual; «Agregar al modelo» lo suma y comparte los nudos que caen en la misma posición.</div>
+      <details open><summary>Edificio ortogonal</summary>
+      <div class="hint">Como la plantilla «3D Frames» de SAP2000: columnas empotradas en la base y vigas en X y en Y en cada nivel.</div>
+      <div class="form">
+        ${campo("nPisos", "Número de niveles")}${campo("h", "Altura de entrepiso [m]")}
+        ${campo("nX", "Crujías en X")}${campo("Lx", "Claro en X [m]")}
+        ${campo("nY", "Crujías en Y")}${campo("Ly", "Claro en Y [m]")}
+        ${cT("xs", "Claros en X (opcional)", "p. ej. 6, 2@8, 6")}${cT("ys", "Claros en Y (opcional)", "p. ej. 3@7")}
+        ${cT("hs", "Alturas de entrepiso (opcional)", "p. ej. 4.5, 19@3.5")}<span></span>
+        ${campo("colB", "Columna b [m]")}${campo("colH", "Columna h [m]")}
+        ${campo("vigB", "Viga b [m]")}${campo("vigH", "Viga h [m]")}
+        ${campo("E", "E [t/m²] (concreto f'c 250: 2213594)")}${campo("G", "G [t/m²] (0.4E)")}
+        ${campo("w", "Carga en vigas w [t/m] (hacia abajo)")}<span></span>
+        ${campo("Fx", "Fuerza lateral X por nivel [t]")}${campo("Fy", "Fuerza lateral Y por nivel [t]")}
+        ${aT("tramos", "Secciones por tramos (opcional): nivel inicial, final, columna b h, viga b h", "1 10 0.8 0.8 0.4 0.8\n11 20 0.6 0.6 0.3 0.7")}
+        ${aT("remet", "Remetimientos (opcional): desde el nivel, ejes X inicial y final, ejes Y inicial y final", "9 2 5 1 4")}
+        ${aT("volados", "Volados (opcional): nivel inicial, final, lado (X+, X−, Y+, Y−), longitud [m]", "2 8 Y- 2")}
+      </div>
+      <div class="hint">Los claros y alturas opcionales sustituyen a los uniformes (repetición con @, como en SAP2000). Los ejes se numeran desde 1 (eje 1 en X = 0). Los volados llevan viga de borde entre las puntas. La fuerza lateral es el total del nivel, repartida en partes iguales entre sus nudos (no hay diafragma rígido).</div>
+      <div class="row"><button class="pri" id="bGen">Generar marco (reemplaza el modelo actual)</button><button id="bGenAdd">Agregar al modelo</button></div>
+      <div class="hint" id="plInfo"></div></details>
+      <details><summary>Núcleo</summary>
+      <div class="hint">Columnas en el perímetro de un rectángulo con vigas peraltadas en cada nivel. Con «diagonales en los muros», cada tablero lleva un par de diagonales articuladas que dan la rigidez de un muro (analogía de armadura). Las columnas y vigas que coinciden con barras existentes toman la sección del núcleo.</div>
+      <div class="form">${c(GN, "GN", "x0", "Esquina X₀ [m]")}${c(GN, "GN", "y0", "Esquina Y₀ [m]")}${c(GN, "GN", "bx", "Ancho en X [m]")}${c(GN, "GN", "by", "Ancho en Y [m]")}
+        ${c(GN, "GN", "nx", "Divisiones en X")}${c(GN, "GN", "ny", "Divisiones en Y")}${c(GN, "GN", "colB", "Columna b [m]")}${c(GN, "GN", "colH", "Columna h [m]")}
+        ${c(GN, "GN", "vigB", "Viga b [m]")}${c(GN, "GN", "vigH", "Viga h [m]")}${ch(GN, "GN", "diag", "Diagonales en los muros")}<span></span>${c(GN, "GN", "dB", "Diagonal b [m]")}${c(GN, "GN", "dH", "Diagonal h [m]")}
+        ${c(GN, "GN", "hs", "Alturas (vacío = niveles del modelo)", zs.length > 1 ? `${zs.length - 1} niveles del modelo` : "p. ej. 10@3.5")}</div>
+      <div class="row"><button id="bNuc">Agregar núcleo al modelo</button></div><div class="hint" id="gnInfo"></div></details>
+      <details><summary>Planta polar (torres circulares y con giro)</summary>
+      <div class="hint">Anillos de columnas con vigas perimetrales y radiales. «Giro» rota cada nivel respecto al anterior (columnas inclinadas, torre helicoidal) y «escala» reduce el radio linealmente hasta la azotea.</div>
+      <div class="form">${c(GP, "GP", "R", "Radios de los anillos [m]", "8, 20")}${c(GP, "GP", "nSeg", "Divisiones por anillo")}${c(GP, "GP", "hs", "Alturas de entrepiso", "20@4")}${c(GP, "GP", "giro", "Giro por nivel [°]")}
+        ${c(GP, "GP", "escala", "Radio en la azotea / radio en la base")}${ch(GP, "GP", "centro", "Columna central")}
+        ${c(GP, "GP", "colB", "Columna b [m]")}${c(GP, "GP", "colH", "Columna h [m]")}${c(GP, "GP", "vigB", "Viga perimetral b [m]")}${c(GP, "GP", "vigH", "Viga perimetral h [m]")}
+        ${c(GP, "GP", "radB", "Viga radial b [m]")}${c(GP, "GP", "radH", "Viga radial h [m]")}${c(GP, "GP", "w", "Carga en vigas w [t/m]")}<span></span>${c(GP, "GP", "Fx", "Fuerza lateral X por nivel [t]")}${c(GP, "GP", "Fy", "Fuerza lateral Y por nivel [t]")}</div>
+      <div class="hint">Usa E y G del edificio ortogonal.</div>
+      <div class="row"><button class="pri" id="bPol">Nuevo modelo</button><button id="bPolAdd">Agregar al modelo</button></div><div class="hint" id="gpInfo"></div></details>
+      <details><summary>Contravientos</summary>
+      <div class="hint">Diagonales en los tableros (una viga con columna debajo de cada extremo). «Λ» parte la viga en su punto medio y conserva su carga. Con «articular», cada diagonal libera My y Mz en ambos extremos y T en A (trabaja a fuerza axial y a la flexión por su propia carga).</div>
+      <div class="form">${sel(GD, "GD", "tipo", "Tipo", [["X", "X"], ["L", "Λ (chevron)"], ["D", "Diagonal alternada"]])}${sel(GD, "GD", "donde", "Dónde", [["per", "Perímetro"], ["todos", "Todos los tableros"], ["X", "Línea X = valor"], ["Y", "Línea Y = valor"]])}
+        ${c(GD, "GD", "k0", "Del nivel")}${c(GD, "GD", "k1", "Al nivel")}${c(GD, "GD", "valor", "Valor de la línea [m]")}${ch(GD, "GD", "art", "Articular")}
+        ${c(GD, "GD", "b", "Diagonal b [m]")}${c(GD, "GD", "h", "Diagonal h [m]")}</div>
+      <div class="row"><button id="bDiag">Agregar contravientos</button></div><div class="hint" id="gdInfo"></div></details>
+      <details><summary>Outriggers y cinturones</summary>
+      <div class="hint">En los niveles indicados, diagonales en los tableros que unen el núcleo con el perímetro (sobre las líneas que cruzan el núcleo) y, con «cinturón», en todo el perímetro de ese entrepiso. El rectángulo del núcleo se llena solo al generar un núcleo.</div>
+      <div class="form">${c(GO, "GO", "niveles", "Niveles", "p. ej. 10, 20")}${sel(GO, "GO", "tipo", "Tipo", [["X", "X"], ["L", "Λ (chevron)"]])}
+        ${c(GO, "GO", "x0", "Núcleo X inicial [m]")}${c(GO, "GO", "x1", "Núcleo X final [m]")}${c(GO, "GO", "y0", "Núcleo Y inicial [m]")}${c(GO, "GO", "y1", "Núcleo Y final [m]")}
+        ${ch(GO, "GO", "cint", "Cinturón perimetral")}${ch(GO, "GO", "art", "Articular")}${c(GO, "GO", "b", "Diagonal b [m]")}${c(GO, "GO", "h", "Diagonal h [m]")}</div>
+      <div class="row"><button id="bOut">Agregar outriggers</button></div><div class="hint" id="goInfo"></div></details>`;
+    p.querySelectorAll("input[data-k]").forEach((i) => (i.oninput = i.onchange = () => { PL[i.dataset.k] = String(i.value).trim() === "" ? NaN : Number(String(i.value).replace(",", ".")); pendienteGen = null; infoPl(); }));
+    p.querySelectorAll("[data-t]").forEach((i) => (i.oninput = () => { GT[i.dataset.t] = i.value; pendienteGen = null; infoPl(); }));
+    const objs = { GN, GP, GD, GO };
+    p.querySelectorAll("[data-o]").forEach((i) => (i.oninput = i.onchange = () => { objs[i.dataset.o][i.dataset.k2] = i.type === "checkbox" ? (i.checked ? 1 : 0) : i.value; pendienteGen = null; }));
+    p.querySelectorAll("details").forEach((d, k) => { if (abiertos[k] != null) d.open = abiertos[k]; d.ontoggle = () => (abiertos[k] = d.open); });
+    $("bGen").onclick = () => aplicarGen("bGen", "plInfo", () => ({ modelo: Gen.ortogonal(leerOrto()), nuevo: true }));
+    $("bGenAdd").onclick = () => aplicarGen("bGenAdd", "plInfo", (m) => { const r = Gen.fusionar(m, Gen.ortogonal(leerOrto())); return { modelo: m, msg: resFus(r) }; });
+    $("bNuc").onclick = () => aplicarGen("bNuc", "gnInfo", (m) => {
+      const o = numeros(GN, ["x0", "y0", "bx", "by", "nx", "ny", "colB", "colH", "vigB", "vigH", "dB", "dH"], "Núcleo");
+      const z = String(GN.hs).trim() ? [0, ...Gen.lista(GN.hs, "Alturas del núcleo").reduce((a, v) => (a.push(+((a.length ? a[a.length - 1] : 0) + v).toFixed(6)), a), [])] : Gen.niveles(m);
+      const r = Gen.fusionar(m, Gen.nucleo({ ...o, zs: z, col: [o.colB, o.colH], vig: [o.vigB, o.vigH], diag: +GN.diag ? [o.dB, o.dH] : null, E: m.material.E, G: m.material.G }), 1e-6, true);
+      Object.assign(GO, { x0: o.x0, x1: o.x0 + o.bx, y0: o.y0, y1: o.y0 + o.by });
+      return { modelo: m, msg: resFus(r) };
+    });
+    const polar = () => { const o = numeros(GP, ["nSeg", "giro", "escala", "colB", "colH", "vigB", "vigH", "radB", "radH", "w", "Fx", "Fy"], "Planta polar"); const pl = leerPlBase();
+      return Gen.polar({ ...o, R: Gen.lista(GP.R, "Radios"), hs: Gen.lista(GP.hs, "Alturas"), centro: +GP.centro, col: [o.colB, o.colH], vig: [o.vigB, o.vigH], rad: [o.radB, o.radH], E: pl.E, G: pl.G }); };
+    $("bPol").onclick = () => aplicarGen("bPol", "gpInfo", () => ({ modelo: polar(), nuevo: true }));
+    $("bPolAdd").onclick = () => aplicarGen("bPolAdd", "gpInfo", (m) => ({ modelo: m, msg: resFus(Gen.fusionar(m, polar())) }));
+    $("bDiag").onclick = () => aplicarGen("bDiag", "gdInfo", (m) => {
+      const o = numeros(GD, ["k0", "k1", "valor", "b", "h"], "Contravientos"); const fn = Gen.filtroNiveles(o.k0, o.k1);
+      const f2 = GD.donde === "per" ? Gen.perimetral(m) : GD.donde === "todos" ? () => true : Gen.filtroLinea(m, GD.donde, o.valor);
+      const r = Gen.arriostrar(m, { tipo: GD.tipo, sec: [o.b, o.h], articular: !!+GD.art, filtro: (t) => fn(t) && f2(t) });
+      if (!r.tableros) throw new Error("Ningún tablero cumple: revisa los niveles (1 = primer entrepiso) y la ubicación.");
+      return { modelo: m, msg: `${r.barras} diagonales en ${r.tableros} tableros.` };
+    });
+    $("bOut").onclick = () => aplicarGen("bOut", "goInfo", (m) => {
+      const o = numeros(GO, ["x0", "x1", "y0", "y1", "b", "h"], "Outriggers"); const ks = Gen.lista(GO.niveles, "Niveles").map((v) => Math.round(v));
+      if (!(o.x1 > o.x0 && o.y1 > o.y0)) throw new Error("Outriggers: el rectángulo del núcleo no es válido.");
+      const fo = Gen.filtroOutrigger(m, [o.x0, o.x1, o.y0, o.y1], !!+GO.cint);
+      const r = Gen.arriostrar(m, { tipo: GO.tipo, sec: [o.b, o.h], articular: !!+GO.art, prefijo: "OT", filtro: (t) => ks.includes(t.k) && fo(t) });
+      if (!r.tableros) throw new Error("Ningún tablero cumple: revisa los niveles y el rectángulo del núcleo.");
+      return { modelo: m, msg: `${r.barras} diagonales en ${r.tableros} tableros.` };
+    });
+    infoPl();
+  }
+  const abiertos = [];
+  const resFus = (r) => `Se agregaron ${r.nudos} nudos y ${r.barras} barras; ${r.compartidos} nudos compartidos con el modelo${r.repetidas ? `, ${r.repetidas} barras ya existían` : ""}.`;
+  function numeros(obj, ks, que) { const o = {}; ks.forEach((k) => { const v = Number(String(obj[k]).replace(",", ".")); if (String(obj[k]).trim() === "" || !isFinite(v)) throw new Error(`${que}: el campo «${k}» no es un número.`); o[k] = v; }); return o; }
+  let pendienteGen = null;
+  // ejecuta un generador sobre una copia; si el resultado es grande pide confirmación en la página
+  function aplicarGen(btnId, infoId, fn) {
+    const info = $(infoId), btn = $(btnId);
+    let res; try { res = fn(res0()); Core.validar(res.modelo); } catch (e) { info.innerHTML = `<b style="color:var(--bad)">${esc(e.message)}</b>`; status(e.message, true); return; }
+    const gdl = gdlDe(res.modelo);
+    if (gdl > LIM_GEN) { const t = `El modelo tendría ${gdl} grados de libertad (límite ${LIM_GEN}).`; info.innerHTML = `<b style="color:var(--bad)">${t}</b>`; status(t, true); return; }
+    if (gdl > AVISO_GEN && pendienteGen !== btnId) { pendienteGen = btnId; btn.textContent = `Confirmar: ${gdl} GDL (puede tardar)`;
+      info.innerHTML = `<b style="color:var(--warn)">El modelo tendrá ${gdl} grados de libertad; el cálculo puede tardar varios segundos y la comprobación por rigidez directa se omitirá. Pulsa otra vez para confirmar.</b>`; return; }
+    pendienteGen = null;
+    M = res.modelo; RES = null; selBar = null; renderSide(); guardarLocal(); marcarEjemplo();
+    $(infoId).innerHTML = `${res.msg ? esc(res.msg) + " " : ""}Modelo: ${M.nodes.length} nudos, ${M.bars.length} barras, ${gdl} GDL.`;
+    if (gdl > 600) status(`Calculando ${gdl} grados de libertad…`, false);
+    setTimeout(() => { calcular(); if (res.nuevo) { vista("3d"); irTab("sideTabs", "pNudos"); } else pedirDibujo(); }, 30);
+  }
+  const res0 = () => JSON.parse(JSON.stringify(M));
+  function leerPlBase() {
+    const o = { ...PL }, ent = { nPisos: "Número de niveles", nX: "Crujías en X", nY: "Crujías en Y" };
+    for (const k of Object.keys(o)) if (!isFinite(o[k])) throw new Error(`Plantilla: el campo «${k}» no es un número.`);
+    for (const k of Object.keys(ent)) { if (o[k] < 0 || Math.round(o[k]) !== o[k]) throw new Error(`Plantilla: «${ent[k]}» debe ser un entero mayor o igual que cero.`); }
+    for (const k of ["h", "colB", "colH", "vigB", "vigH", "E", "G"]) if (!(o[k] > 0)) throw new Error(`Plantilla: «${k}» debe ser mayor que cero.`);
+    return o;
+  }
+  const lineas = (t) => String(t || "").split(/\n/).map((l) => l.trim()).filter(Boolean).map((l) => l.split(/[\s,;]+/));
+  function leerOrto() {
+    const o = leerPlBase();
+    const rep = (n, v) => Array.from({ length: n }, () => v);
+    const xs = GT.xs.trim() ? Gen.lista(GT.xs, "Claros en X") : (o.nX > 0 ? rep(o.nX, o.Lx) : []);
+    const ys = GT.ys.trim() ? Gen.lista(GT.ys, "Claros en Y") : (o.nY > 0 ? rep(o.nY, o.Ly) : []);
+    const hs = GT.hs.trim() ? Gen.lista(GT.hs, "Alturas") : rep(o.nPisos, o.h);
+    if (!GT.hs.trim() && o.nPisos < 1) throw new Error("Plantilla: se necesita al menos 1 nivel.");
+    if (!xs.length && !ys.length) throw new Error("Plantilla: se necesita al menos 1 crujía en X o en Y.");
+    if (xs.some((v) => !(v > 0)) || ys.some((v) => !(v > 0))) throw new Error("Plantilla: los claros deben ser mayores que cero.");
+    const n = (v, que) => { const x = Number(String(v).replace(",", ".")); if (!isFinite(x)) throw new Error(`${que}: «${v}» no es un número.`); return x; };
+    const tramos = lineas(GT.tramos).map((c, i) => { if (c.length !== 6) throw new Error(`Secciones por tramos, renglón ${i + 1}: se esperan 6 valores (nivel inicial, final, col b h, viga b h).`);
+      const v = c.map((x) => n(x, `Tramos, renglón ${i + 1}`)); return { desde: v[0], hasta: v[1], col: [v[2], v[3]], vig: [v[4], v[5]] }; });
+    const remet = lineas(GT.remet).map((c, i) => { if (c.length !== 5) throw new Error(`Remetimientos, renglón ${i + 1}: se esperan 5 valores (nivel, eje X inicial y final, eje Y inicial y final).`);
+      const v = c.map((x) => n(x, `Remetimientos, renglón ${i + 1}`)); return { desde: v[0], x: [v[1], v[2]], y: [v[3], v[4]] }; });
+    const volados = lineas(GT.volados).map((c, i) => { if (c.length !== 4) throw new Error(`Volados, renglón ${i + 1}: se esperan 4 valores (nivel inicial, final, lado, longitud).`);
+      return { desde: n(c[0], "Volados"), hasta: n(c[1], "Volados"), lado: c[2].toUpperCase().replace("−", "-"), L: n(c[3], "Volados") }; });
+    return { xs, ys, hs, col: [o.colB, o.colH], vig: [o.vigB, o.vigH], E: o.E, G: o.G, w: o.w, Fx: o.Fx, Fy: o.Fy, tramos, remet, volados };
+  }
+  function infoPl() {
+    const el = $("plInfo"); if (!el) return; const b = $("bGen"); if (b) b.textContent = "Generar marco (reemplaza el modelo actual)";
+    const bb = $("bGenAdd"); if (bb) bb.textContent = "Agregar al modelo";
+    let m; try { m = Gen.ortogonal(leerOrto()); } catch (e) { el.innerHTML = `<b style="color:var(--bad)">${esc(e.message)}</b>`; return; }
+    el.textContent = `Resultado: ${m.nodes.length} nudos, ${m.bars.length} barras, ${gdlDe(m)} grados de libertad.`;
+  }
+
+  // ---------- cálculo ----------
+  let tmr = null;
+  function cambio(rerender) {
+    guardarLocal();
+    if (rerender) renderSide();
+    clearTimeout(tmr); tmr = setTimeout(calcular, 120);
+  }
+  let forzarComp = false;
+  function calcular() {
+    const t0 = performance.now();
+    versionRes++; opcionesVer();
+    try { RES = Core.analizar(M, forzarComp ? { comprobar: true } : undefined); ERR = null; }
+    catch (e) { RES = null; ERR = e.message; }
+    const ms = performance.now() - t0;
+    if (ERR) status(ERR, true);
+    else status(`Cálculo correcto · ${RES.n} GDL · ${M.nodes.length} nudos · ${M.bars.length} barras · ${ms.toFixed(0)} ms`, false);
+    renderResultados(); dibujar();
+  }
+  function status(msg, err) { $("stMsg").innerHTML = `<span class="${err ? "err" : "okm"}">${esc(msg)}</span>`; }
+
+  // ---------- resultados ----------
+  function tablaRS(head, rows, cls) {
+    return `<table class="rs ${cls || ""}"><thead><tr>${head.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr${r.hl ? ' class="hl"' : ""}>${r.map((c, i) => (i === 0 ? `<td class="l">${c}</td>` : `<td>${c}</td>`)).join("")}</tr>`).join("")}</tbody></table>`;
+  }
+  // ---------- paginación y búsqueda para tablas largas ----------
+  const PAG = 100, pag = {}, filtro = {}, repintar = {};
+  function paginado(key, filas, render, buscar) {
+    const txt = (filtro[key] || "").trim().toLowerCase();
+    const lista = txt && buscar ? filas.filter((r) => buscar(r).toLowerCase().includes(txt)) : filas;
+    const np = Math.max(1, Math.ceil(lista.length / PAG)); pag[key] = Math.min(pag[key] || 0, np - 1);
+    const p = pag[key], tramo = lista.slice(p * PAG, (p + 1) * PAG);
+    const nav = (filas.length > PAG || txt) ? `<div class="row pagnav">${buscar ? `<input class="buscar" data-filt="${key}" placeholder="Buscar…" value="${esc(filtro[key] || "")}">` : ""}
+      <button data-pg="${key}" data-d="-1" ${p ? "" : "disabled"}>‹</button><span>${lista.length ? p * PAG + 1 : 0}–${Math.min((p + 1) * PAG, lista.length)} de ${lista.length}</span><button data-pg="${key}" data-d="1" ${p < np - 1 ? "" : "disabled"}>›</button></div>` : "";
+    return nav + render(tramo);
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-pg]"); if (!b) return;
+    const k = b.dataset.pg; pag[k] = Math.max(0, (pag[k] || 0) + +b.dataset.d); if (repintar[k]) repintar[k]();
+  });
+  let tFilt = null;
+  document.addEventListener("input", (e) => {
+    const i = e.target.closest("input[data-filt]"); if (!i) return;
+    const k = i.dataset.filt; filtro[k] = i.value; pag[k] = 0;
+    clearTimeout(tFilt); tFilt = setTimeout(() => { if (repintar[k]) { repintar[k](); const n = document.querySelector(`input[data-filt="${k}"]`); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } } }, 200);
+  });
+  // ---------- unidades de los desplazamientos ----------
+  // Con E = 1 (criterio del ejemplo del curso) los desplazamientos salen en unidades de 1/E: se rotulan «·E».
+  function uD() {
+    const E = +M.material.E, real = E >= 1000;
+    return real ? { real, t: "[mm]", r: "[rad]", ft: (v) => f(v * 1000, 3), fr: (v) => f(v, 6), nota: "" }
+      : { real, t: "·E", r: "·E", ft: (v) => f(v), fr: (v) => f(v),
+          nota: `Con E = ${esc(E)} los desplazamientos están en unidades de 1/E (como el ejemplo del curso): para tenerlos en metros y radianes divide entre el E real del material. Ejemplo: concreto f'c = 250 kg/cm², E ≈ 2 213 594 t/m².` };
+  }
+  const badge = (ok, txt) => `<span class="badge ${ok ? "ok" : "bad"}">${txt}</span>`;
+  function renderResultados() {
+    ["rRes", "rDesp", "rReac", "rFzas", "rPaso", "rSAP"].forEach((id) => ($(id).innerHTML = ""));
+    if (!RES) { $("rRes").innerHTML = `<p class="err" style="color:var(--bad)"><b>No se pudo calcular:</b> ${esc(ERR || "")}</p>`; return; }
+    const R = RES, C = R.checks, U = uD();
+    let Kmax = 0; for (const v of R.Kdiag) Kmax = Math.max(Kmax, Math.abs(v));
+    let Fref = 1; for (let g = 0; g < R.n; g++) Fref = Math.max(Fref, Math.abs(R.Fn[g]), Math.abs(R.Ffij[g]));
+    caja();
+    const okK = C.comprobar && C.difK < 1e-9 * Kmax, okE = C.eqMax < 1e-8 * Fref * Math.max(1, box.r), okG = C.globMax < 1e-8 * Fref * Math.max(1, box.r * box.r);
+    let nComp = 0;
+    const compRow = (t, v) => C.comprobar ? [t, `máx. diferencia ${fe(v)}`, badge(okK, okK ? "iguales" : "revisar")] : [t, `omitida (${R.n} GDL &gt; ${Core.LIMITE_COMPROBACION})`, nComp++ ? "—" : `<button id="bComp">Comprobar ahora</button>`];
+    const sumR = [0, 0, 0]; Object.values(R.reac).forEach((v) => { for (let i = 0; i < 3; i++) sumR[i] += v[i]; });
+    let dmax = 0, dn = "", hmax = 0; M.nodes.forEach((n) => { const g = R.map[n.id]; const c = [0, 1, 2].map((k) => (g[k] == null ? 0 : R.d[g[k]]));
+      const t = Math.hypot(...c); if (t > dmax) { dmax = t; dn = n.id; } hmax = Math.max(hmax, Math.hypot(c[0], c[1])); });
+    let zmin = Infinity, zmax = -Infinity; M.nodes.forEach((n) => { zmin = Math.min(zmin, +n.z); zmax = Math.max(zmax, +n.z); });
+    const altura = zmax - zmin, deriva = U.real && altura > 0 ? hmax / altura : null;
+    let mmax = 0, mb = ""; R.bars.forEach((b) => [4, 5].forEach((ix) => { const p = Core.maxAbs(b, ix); if (Math.abs(p.v) > mmax) { mmax = Math.abs(p.v); mb = b.id; } }));
+    $("rRes").innerHTML = `<div class="cards">
+      <div class="card"><div class="k">Grados de libertad</div><div class="v">${R.n}</div></div>
+      <div class="card"><div class="k">Desplazamiento máximo (nudo ${esc(dn)})</div><div class="v">${U.real ? f(dmax * 1000, 2) + " mm" : f(dmax) + " ·E"}</div></div>
+      ${deriva != null ? `<div class="card"><div class="k">Desplaz. lateral máx. / altura</div><div class="v">${deriva > 0 ? "1/" + Math.round(1 / deriva) : "0"}</div></div>` : ""}
+      <div class="card"><div class="k">Momento máximo (barra ${esc(mb)})</div><div class="v">${f(mmax, 3)} t·m</div></div>
+      <div class="card"><div class="k">Σ reacciones (X, Y, Z) [t]</div><div class="v">${sumR.map((v) => f(v, 3)).join(", ")}</div></div></div>
+      ${U.nota ? `<div class="hint" style="color:var(--warn)"><b>Unidades:</b> ${U.nota}</div>` : ""}
+      ${deriva != null && deriva > 0.02 ? `<div class="hint" style="color:var(--bad)"><b>Aviso:</b> el desplazamiento lateral es ${(deriva * 100).toFixed(1)} % de la altura. Con desplazamientos tan grandes el análisis lineal (pequeños desplazamientos, sin efecto P-Δ) deja de ser representativo: revisa secciones, rigidez o cargas.</div>` : ""}
+      ${tablaRS(["Comprobación", "Resultado", "Estado"], [
+        compRow("[K] por continuidad (Damy) contra [K] por rigidez directa", C.difK),
+        compRow("{d} por ambos métodos", C.difD),
+        compRow("Fuerzas en extremos por ambos métodos", C.difF),
+        ["Equilibrio de nudos libres (Σ fuerzas de barra − carga)", `máx. residuo ${fe(C.eqMax)}`, badge(okE, okE ? "cumple" : "no cumple")],
+        ["Equilibrio global (reacciones + cargas, momentos al origen)", `máx. residuo ${fe(C.globMax)}`, badge(okG, okG ? "cumple" : "no cumple")]])}
+      <div class="hint">Matriz [K] en perfil: ancho de banda ${R.perfil.banda}, ${R.perfil.terminos.toLocaleString("es-MX")} términos (${R.perfil.memoriaMB.toFixed(1)} MB; la matriz completa ocuparía ${R.perfil.densaMB.toFixed(1)} MB).
+      ${C.comprobar ? "" : "En modelos muy grandes la comprobación por rigidez directa se omite. "}Haz clic en una barra del visor para ver su desarrollo en «Paso a paso». Diagramas: fuerzas internas en la cara positiva (normal +x'), N &gt; 0 en tensión.</div>`;
+    if ($("bComp")) $("bComp").onclick = () => { forzarComp = true; status("Comprobando por rigidez directa…", false); setTimeout(() => { calcular(); forzarComp = false; }, 30); };
+    // desplazamientos
+    repintar.desp = () => { $("rDesp").innerHTML = (U.nota ? `<div class="hint" style="color:var(--warn)">${U.nota}</div>` : "") +
+      paginado("desp", M.nodes, (tr) => tablaRS(["Nudo", `d<sub>X</sub> ${U.t}`, `d<sub>Y</sub> ${U.t}`, `d<sub>Z</sub> ${U.t}`, `φ<sub>X</sub> ${U.r}`, `φ<sub>Y</sub> ${U.r}`, `φ<sub>Z</sub> ${U.r}`],
+        tr.map((n) => [esc(n.id), ...R.map[n.id].map((g, c) => (g == null ? "0 (restr.)" : c < 3 ? U.ft(R.d[g]) : U.fr(R.d[g])))])), (n) => n.id); };
+    repintar.desp();
+    // reacciones
+    repintar.reac = () => { const ent = Object.entries(R.reac);
+      $("rReac").innerHTML = paginado("reac", ent, (tr) => { const rr = tr.map(([id, v]) => [esc(id), ...v.map((x, c) => (R.nodo[id].r[c] ? f(x) : "—"))]);
+        rr.push(Object.assign(["Σ (todos los apoyos)", ...[0, 1, 2].map((i) => f(sumR[i])), "", "", ""], { hl: true }));
+        return tablaRS(["Apoyo", "R<sub>X</sub> [t]", "R<sub>Y</sub> [t]", "R<sub>Z</sub> [t]", "M<sub>X</sub> [t·m]", "M<sub>Y</sub> [t·m]", "M<sub>Z</sub> [t·m]"], rr); }, (e) => e[0])
+        + `<div class="hint">Fuerzas que los apoyos ejercen sobre la estructura, en ejes globales.</div>`; };
+    repintar.reac();
+    // fuerzas en barras
+    repintar.fzas = () => { $("rFzas").innerHTML = `<div class="hint">Fuerzas sobre la barra en ejes locales ({F} = {F}<sub>I</sub> + {F}<sub>II</sub>); N &gt; 0 tensión; M<sub>T</sub> positivo si su vector sale de la barra.</div>`
+      + paginado("fzas", R.bars, (tr) => tablaRS(["Barra", "A→B", "L", "N", "M<sub>T</sub>", ...FNAMES], tr.map((b) => [esc(b.id), `${esc(b.i)}→${esc(b.j)}`, f(b.L, 3), f(b.f[6]), f(b.f[9]), ...b.f.map((v) => f(v))])), (b) => b.id + " " + b.i + " " + b.j); };
+    repintar.fzas();
+    renderPaso(); renderSAP();
+  }
+  function colLabel(R, g) { if (g == null) return "—"; const d = R.dofs[g]; return `${g + 1}<br><span style="font-weight:400;color:#6b7b8b">${esc(d.node)}·${GDLN[d.comp]}</span>`; }
+  function renderPaso() {
+    const R = RES; if (!R) return;
+    let b = R.bars.find((x) => x.id === selBar); if (!b) { b = R.bars[0]; selBar = b && b.id; }
+    if (!b) return;
+    const U = uD(), k = R.bars.indexOf(b);
+    const v3 = (v) => `(${v.map((x) => f(x, 4)).join(", ")})`;
+    let h = `<div class="row"><b>Barra</b> <button id="bPrev" ${k ? "" : "disabled"}>‹</button><input id="iBar" list="dlBarras" value="${esc(b.id)}" style="width:110px"><button id="bNext" ${k < R.bars.length - 1 ? "" : "disabled"}>›</button>
+      <span class="hint">${k + 1} de ${R.bars.length} · ${esc(b.i)} → ${esc(b.j)}, sección ${esc(b.sec)}, L = ${f(b.L, 4)} m</span></div>`;
+    h += tablaRS(["Vector", "x", "y", "z"], [["U<sub>x'</sub>", ...b.ux.map((x) => f(x, 4))], ["U<sub>y'</sub>", ...b.uy.map((x) => f(x, 4))], ["U<sub>z'</sub>", ...b.uz.map((x) => f(x, 4))]]);
+    h += `<b>Rigideces de Damy [k] (diagonal)</b>` + tablaRS(["", ...ENAMES], [["k", ...b.kd.map((x) => f(x, 6))]]);
+    if (b.lib.length) h += `<div class="hint"><b>Barra con liberaciones</b> — extremo A: ${b.libA.join(" ") || "ninguna"}; extremo B: ${b.libB.join(" ") || "ninguna"}.
+      En cada plano con un extremo libre, [k] usa r<sub>aa</sub>' = r<sub>ab</sub>' = 0 y r<sub>bb</sub>' = r<sub>bb</sub> − r<sub>ab</sub>²/r<sub>aa</sub> = 3EI/L (o al revés si se libera B); con ambos extremos libres el plano no tiene rigidez a flexión, y con T liberada GJ/L = 0.
+      Las fuerzas de empotramiento {F}<sub>I</sub> son las de la barra con esa articulación (p. ej. empotrada-articulada: qL²/8, 5qL/8 y 3qL/8).</div>`;
+    h += `<b>Matriz de continuidad [A] (8 × 12)</b> — columnas: GDL global (— = extremo restringido)`;
+    const colh = b.cols.map((g, kk) => `${kk < 6 ? "A" : "B"}:${["d<sub>x</sub>", "d<sub>y</sub>", "d<sub>z</sub>", "φ<sub>x</sub>", "φ<sub>y</sub>", "φ<sub>z</sub>"][kk % 6]}<br>${colLabel(R, g)}`);
+    h += tablaRS(["", ...colh], b.Ab.map((row, i) => [ENAMES[i], ...row.map((x) => f(x, 4))]), "mat");
+    h += `<b>Deformaciones, fuerzas internas y elementos mecánicos</b>` + tablaRS(["e", `{e}${U.real ? "" : " ·E"}`, "P", "{P} = [k]{e}"], b.e.map((x, i) => [ENAMES[i], f(x), PNAMES[i], f(b.P[i])]));
+    const Me = b.Mends;
+    h += tablaRS(["M<sub>y'A</sub> = M<sub>1</sub>+M<sub>2</sub>", "M<sub>y'B</sub> = M<sub>2</sub>+M<sub>3</sub>", "M<sub>z'A</sub>", "M<sub>z'B</sub>", "N", "M<sub>T</sub>"], [[f(Me.MAy), f(Me.MBy), f(Me.MAz), f(Me.MBz), f(Me.N), f(Me.MT)]]);
+    h += `<b>Fuerzas en los extremos</b> (carga local q = ${v3(b.q)} t/m)` + tablaRS(["Fuerza", "{F}<sub>I</sub> empotramiento", "{F}<sub>II</sub>", "{F} = {F}<sub>I</sub> + {F}<sub>II</sub>"], FNAMES.map((n, kk) => [n, f(b.f0[kk]), f(b.fII[kk]), f(b.f[kk])]));
+    h += `<hr><b>Estructura completa</b><div class="hint">{F}<sub>II</sub> = {F}<sub>nudos</sub> − {F}<sub>fij</sub>;  {d} = [K]<sup>−1</sup>{F}<sub>II</sub>. ${U.real ? "{d} en m y rad." : "{d} en unidades de 1/E."}</div><div id="pasoDofs"></div>`;
+    if (R.K && R.n <= 36) h += `<b>Matriz de rigidez [K] = Σ [A]<sup>T</sup>[k][A]</b>` + tablaRS(["", ...R.dofs.map((_, g) => String(g + 1))], R.K.map((row, i) => [String(i + 1), ...row.map((x) => f(x, 5))]), "mat");
+    else h += `<div class="hint">[K] tiene ${R.n} × ${R.n} términos (banda ${R.perfil.banda}); ${R.K ? "descárgala con «Resultados CSV»." : "es demasiado grande para mostrarla o exportarla completa."}</div>`;
+    $("rPaso").innerHTML = h;
+    repintar.dofs = () => { $("pasoDofs").innerHTML = paginado("dofs", R.dofs.map((d, g) => [d, g]), (tr) => tablaRS(["GDL", "Nudo", "Comp.", "{F}<sub>nudos</sub>", "{F}<sub>fij</sub>", "{F}<sub>II</sub>", "{d}"],
+      tr.map(([d, g]) => [String(g + 1), esc(d.node), GDLN[d.comp], f(R.Fn[g]), f(R.Ffij[g]), f(R.FII[g]), f(R.d[g])])), (t) => t[0].node); };
+    repintar.dofs();
+    const ir = (id) => { selBar = id; picked = true; renderPaso(); dibujar(); };
+    $("iBar").onchange = (e) => { const v = e.target.value.trim(); if (R.bars.some((x) => x.id === v)) ir(v); else { status(`La barra «${v}» no existe`, true); e.target.value = b.id; } };
+    $("bPrev").onclick = () => ir(R.bars[k - 1].id); $("bNext").onclick = () => ir(R.bars[k + 1].id);
+  }
+  function esTarea() {
+    const t = Modelos.tarea(); return JSON.stringify([M.nodes, M.bars, M.nodeLoads, M.barLoads, M.material, M.sections.map((s) => [s.id, s.b, s.h, s.auto])]) ===
+      JSON.stringify([t.nodes, t.bars, t.nodeLoads, t.barLoads, t.material, t.sections.map((s) => [s.id, s.b, s.h, s.auto])]);
+  }
+  // ---------- comprobación contra SAP2000 (resultados cargados por el usuario) ----------
+  let SAP = null, SAPnombre = "", SAPcaso = null, CMP = null, ordenSAP = "err";
+  const TOL = () => Math.max(1e-6, (+($("iTol") && $("iTol").value) || 0.1) / 100);
+  function sapIncluido() {   // resultados de SAP2000 v26.3 del ejercicio, en el mismo formato que un archivo cargado
+    const S = Modelos.sapTarea, filas = { disp: [], reac: [], frames: [] };
+    Object.entries(S.disp).forEach(([id, v]) => filas.disp.push({ id, caso: "CARGA", v }));
+    Object.entries(S.reac).forEach(([id, v]) => filas.reac.push({ id, caso: "CARGA", v }));
+    const L = { "1": 3, "2": 4, "3": 5 };
+    Object.entries(S.ends).forEach(([id, [a, b]]) => { filas.frames.push({ id, caso: "CARGA", v: a, x: 0 }); filas.frames.push({ id, caso: "CARGA", v: b, x: L[id] }); });
+    return { filas, casos: ["CARGA"], tablas: ["incluidos en el programa"], avisos: [] };
+  }
+  async function cargarSAP(lista) {
+    const archivos = lista ? [...lista] : [];   // copia: el campo de archivo se vacía después
+    if (!archivos.length) return;
+    try {
+      status("Leyendo resultados de SAP2000…", false);
+      const nombre = archivos.map((a) => a.name).join(", ");
+      SAP = await SapRes.leerArchivos(archivos); SAPnombre = nombre; SAPcaso = SapRes.casoPorOmision(SAP);
+      status(`Resultados de SAP2000 cargados: ${SAPnombre}`, false);
+      ["cmpD", "cmpR", "cmpF"].forEach((k) => (pag[k] = 0));
+      renderSAP(); dibujar();
+    } catch (e) { status("No se pudieron leer los resultados: " + e.message, true); }
+  }
+  function renderSAP() {
+    const el = $("rSAP"), R = RES;
+    const incluido = !SAP && esTarea();
+    const fuente = SAP || (incluido ? sapIncluido() : null);
+    CMP = null;
+    let cab = `<div class="row" id="zonaSAP" style="border:1px dashed var(--line);border-radius:6px;padding:8px">
+      <button class="pri" id="bSAPcargar">Cargar resultados de SAP2000…</button>
+      <span class="hint" style="margin:0">.xlsx exportado por SAP, .csv o texto .s2k · tablas Joint Displacements, Joint Reactions y Element Forces – Frames · también puedes arrastrar el archivo aquí</span>
+      <span style="flex:1"></span><label class="hint" style="margin:0">Tolerancia <input id="iTol" value="${esc(($("iTol") && $("iTol").value) || "0.1")}" style="width:46px"> %</label>
+      ${SAP ? `<button id="bSAPquitar">Quitar</button>` : ""}</div>`;
+    if (!fuente) { el.innerHTML = cab + `<p class="hint">Exporta el modelo con «Exportar a SAP2000», córrelo en SAP2000 y exporta a Excel las tablas <b>Joint Displacements</b>, <b>Joint Reactions</b> y <b>Element Forces – Frames</b> (File → Export → SAP2000 MS Excel Spreadsheet). Después cárgalo aquí: el programa empata nudos y barras por nombre y compara.</p>`; enlazarSAP(); return; }
+    if (!R) { el.innerHTML = cab + `<p class="hint" style="color:var(--bad)">Corrige el modelo para poder comparar.</p>`; enlazarSAP(); return; }
+    let c; try { c = SapRes.comparar(R, M, fuente, SAPcaso || SapRes.casoPorOmision(fuente)); } catch (e) { el.innerHTML = cab + `<p style="color:var(--bad)">${esc(e.message)}</p>`; enlazarSAP(); return; }
+    CMP = c; const tol = TOL(), pct = (v) => (v * 100 < 0.001 && v > 0 ? "< 0.001" : (v * 100).toFixed(3)) + " %";
+    const tarjeta = (t, v, n, tabla) => (n ? `<div class="card"><div class="k">${t} (${n})</div><div class="v">${pct(v)} ${badge(v <= tol, v <= tol ? "coincide" : "revisar")}</div></div>`
+      : `<div class="card"><div class="k">${t}</div><div class="v" style="font-size:13px;color:var(--warn)">sin datos: el archivo no trae la tabla «${tabla}»</div></div>`);
+    const casos = fuente.casos.length > 1 ? `<label>Caso <select id="sCaso">${fuente.casos.map((k) => `<option ${k === c.caso ? "selected" : ""}>${esc(k)}</option>`).join("")}</select></label>` : `<span class="hint" style="margin:0">Caso: ${esc(c.caso)}</span>`;
+    cab += `<div class="row">${incluido ? `<span class="hint" style="margin:0">Mostrando los resultados de SAP2000 v26.3 <b>incluidos</b> para el ejercicio de la tarea.</span>` : `<span class="hint" style="margin:0">Archivo: <b>${esc(SAPnombre)}</b></span>`} ${casos}
+      <span style="flex:1"></span><label class="hint" style="margin:0">Ordenar <select id="sOrdSAP"><option value="err" ${ordenSAP === "err" ? "selected" : ""}>por diferencia</option><option value="id" ${ordenSAP === "id" ? "selected" : ""}>por nombre</option></select></label>
+      <button id="bSAPcsv">Exportar comparación</button></div>
+      <div class="cards">${tarjeta("Desplazamientos", c.max.disp, c.disp.length, "Joint Displacements")}${tarjeta("Reacciones", c.max.reac, c.reac.length, "Joint Reactions")}${tarjeta("Fuerzas internas", c.max.frames, c.frames.length ? c.frames.length + " estaciones" : 0, "Element Forces - Frames")}</div>
+      ${fuente.tablas && !incluido ? `<div class="hint">Tablas leídas: ${fuente.tablas.map(esc).join(", ")}${fuente.ignoradas && fuente.ignoradas.length ? ` · ignoradas: ${fuente.ignoradas.map(esc).join(", ")}` : ""}</div>` : ""}`;
+    const avisos = [];
+    if (c.faltan.nudos.length) avisos.push(`${c.faltan.nudos.length} nudo(s) de SAP no existen en el modelo: ${c.faltan.nudos.slice(0, 8).map(esc).join(", ")}${c.faltan.nudos.length > 8 ? "…" : ""}`);
+    if (c.faltan.barras.length) avisos.push(`${c.faltan.barras.length} barra(s) de SAP no existen en el modelo: ${c.faltan.barras.slice(0, 8).map(esc).join(", ")}${c.faltan.barras.length > 8 ? "…" : ""}`);
+    if (c.libresConReac.length) avisos.push(`hay «reacciones» en ${c.libresConReac.length} nudo(s) sin apoyo (${c.libresConReac.slice(0, 5).map(esc).join(", ")}): esa tabla no parece ser Joint Reactions`);
+    if (c.sinSap.barras) avisos.push(`${c.sinSap.barras} barra(s) del modelo no tienen resultados en el archivo de SAP.`);
+    if (avisos.length) cab += `<div class="hint" style="color:var(--warn)"><b>Revisa los nombres:</b> ${avisos.join(" · ")}. ¿El archivo corresponde a este modelo?</div>`;
+    cab += `<div class="hint">Diferencia = |Marco3D − SAP2000| entre el valor máximo de su tipo en SAP (traslaciones ${f(c.refs.mT)} m, giros ${f(c.refs.mR)} rad, fuerzas ${f(c.refs.mFi)} t, momentos ${f(c.refs.mMi)} t·m). Convención de SAP2000 con ejes 2 = y', 3 = z': P, V2, V3, T y M3 = N, V<sub>y'</sub>, V<sub>z'</sub>, T y M<sub>z'</sub>; M2 = −M<sub>y'</sub>. En el visor, «Mostrar → Diferencia con SAP2000» colorea las barras.</div>`;
+    const ord = (arr) => (ordenSAP === "err" ? [...arr].sort((a, b) => b.err - a.err) : arr);
+    const celda = (r, k, cls) => `${f(r.propio[k])}<br><span style="color:#6b7b8b">${f(r.sap[k])}</span>`;
+    const marca = (e) => `<b style="color:${e <= tol ? "var(--ok)" : "var(--bad)"}">${pct(e)}</b>`;
+    el.innerHTML = cab + `<h3>Desplazamientos <span class="hint">(arriba Marco3D, abajo SAP2000)</span></h3><div id="cmpD"></div><h3>Reacciones</h3><div id="cmpR"></div><h3>Fuerzas internas en las estaciones de SAP</h3><div id="cmpF"></div>`;
+    repintar.cmpD = () => ($("cmpD").innerHTML = paginado("cmpD", ord(c.disp), (tr) => tablaRS(["Nudo", "U1 [m]", "U2 [m]", "U3 [m]", "R1 [rad]", "R2 [rad]", "R3 [rad]", "Dif."], tr.map((r) => [esc(r.id), ...[0, 1, 2, 3, 4, 5].map((k) => celda(r, k)), marca(r.err)])), (r) => r.id));
+    repintar.cmpR = () => ($("cmpR").innerHTML = paginado("cmpR", ord(c.reac), (tr) => tablaRS(["Apoyo", "F1 [t]", "F2 [t]", "F3 [t]", "M1 [t·m]", "M2 [t·m]", "M3 [t·m]", "Dif."], tr.map((r) => [esc(r.id), ...[0, 1, 2, 3, 4, 5].map((k) => celda(r, k)), marca(r.err)])), (r) => r.id));
+    repintar.cmpF = () => ($("cmpF").innerHTML = paginado("cmpF", ord(c.frames), (tr) => tablaRS(["Barra", "Estación [m]", "P [t]", "V2 [t]", "V3 [t]", "T [t·m]", "M2 [t·m]", "M3 [t·m]", "Dif."], tr.map((r) => [esc(r.id), f(r.x, 3), ...[0, 1, 2, 3, 4, 5].map((k) => celda(r, k)), marca(r.err)])), (r) => r.id));
+    repintar.cmpD(); repintar.cmpR(); repintar.cmpF();
+    enlazarSAP();
+    if ($("sCaso")) $("sCaso").onchange = (e) => { SAPcaso = e.target.value; renderSAP(); dibujar(); };
+    $("sOrdSAP").onchange = (e) => { ordenSAP = e.target.value; ["cmpD", "cmpR", "cmpF"].forEach((k) => (pag[k] = 0)); renderSAP(); };
+    $("bSAPcsv").onclick = () => {
+      const q = (v) => (typeof v === "number" ? String(v) : `"${String(v).replace(/"/g, '""')}"`), L = [`Comparación Marco3D contra SAP2000 · caso ${c.caso} · ${SAPnombre || "resultados incluidos"}`];
+      L.push("", "DESPLAZAMIENTOS (m, rad)", "Nudo,U1,U2,U3,R1,R2,R3,U1 SAP,U2 SAP,U3 SAP,R1 SAP,R2 SAP,R3 SAP,Diferencia %");
+      c.disp.forEach((r) => L.push([r.id, ...r.propio, ...r.sap, r.err * 100].map(q).join(",")));
+      L.push("", "REACCIONES (t, t·m)", "Apoyo,F1,F2,F3,M1,M2,M3,F1 SAP,F2 SAP,F3 SAP,M1 SAP,M2 SAP,M3 SAP,Diferencia %");
+      c.reac.forEach((r) => L.push([r.id, ...r.propio, ...r.sap, r.err * 100].map(q).join(",")));
+      L.push("", "FUERZAS INTERNAS (convención SAP2000)", "Barra,Estación,P,V2,V3,T,M2,M3,P SAP,V2 SAP,V3 SAP,T SAP,M2 SAP,M3 SAP,Diferencia %");
+      c.frames.forEach((r) => L.push([r.id, r.x, ...r.propio, ...r.sap, r.err * 100].map(q).join(",")));
+      descargar("Marco3D_comparacion_SAP2000.csv", "﻿" + L.join("\r\n"), "text/csv");
+    };
+  }
+  function enlazarSAP() {
+    const fi = $("fSAP");
+    $("bSAPcargar").onclick = () => fi.click();
+    if ($("bSAPquitar")) $("bSAPquitar").onclick = () => { SAP = null; SAPnombre = ""; SAPcaso = null; renderSAP(); dibujar(); status("Resultados de SAP2000 quitados", false); };
+    $("iTol").onchange = () => { renderSAP(); dibujar(); };
+    const z = $("zonaSAP");
+    z.ondragover = (e) => { e.preventDefault(); z.style.background = "#eef5fd"; };
+    z.ondragleave = () => (z.style.background = "");
+    z.ondrop = (e) => { e.preventDefault(); z.style.background = ""; cargarSAP(e.dataTransfer.files); };
+  }
+
+  // ---------- visor 3D ----------
+  const cv = $("cv"), ctx = cv.getContext("2d");
+  const cam = { yaw: -35 * Math.PI / 180, el: 25 * Math.PI / 180, zoom: 1, px: 0, py: 0 };
+  let box = { c: [0, 0, 0], r: 1 };
+  function caja(lista) {
+    const ns = lista || M.nodes;
+    if (!ns.length) { box = { c: [0, 0, 0], r: 1 }; return; }
+    const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+    ns.forEach((n) => [n.x, n.y, n.z].forEach((v, i) => { mn[i] = Math.min(mn[i], +v); mx[i] = Math.max(mx[i], +v); }));
+    box = { c: mn.map((v, i) => (v + mx[i]) / 2), r: Math.max(Math.hypot(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]) / 2, 0.5) };
+  }
+  function vista(v) {
+    const d = Math.PI / 180;
+    Object.assign(cam, { "3d": { yaw: -35 * d, el: 25 * d }, xz: { yaw: 0, el: 0 }, yz: { yaw: -90 * d, el: 0 }, xy: { yaw: 0, el: 90 * d } }[v], { zoom: 1, px: 0, py: 0 });
+    dibujar();
+  }
+  let W = 0, H = 0, S = 1;
+  let C0 = [0, 0];   // centro de la proyección del modelo
+  function crudo(p) {
+    const x = p[0] - box.c[0], y = p[1] - box.c[1], z = p[2] - box.c[2];
+    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), ce = Math.cos(cam.el), se = Math.sin(cam.el);
+    const xr = cy * x - sy * y, yr = sy * x + cy * y;
+    return [xr, z * ce + yr * se, yr * ce - z * se];
+  }
+  function proy(p) { const c = crudo(p); return [W / 2 + cam.px + S * (c[0] - C0[0]), H / 2 + cam.py - S * (c[1] - C0[1]), c[2]]; }
+  function encuadre(lista) {   // escala para que la proyección completa quepa en el visor
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    (lista || M.nodes).forEach((n) => { const c = crudo([+n.x, +n.y, +n.z]); if (!isFinite(c[0]) || !isFinite(c[1])) return; x0 = Math.min(x0, c[0]); x1 = Math.max(x1, c[0]); y0 = Math.min(y0, c[1]); y1 = Math.max(y1, c[1]); });
+    if (!isFinite(x0)) { S = 1; C0 = [0, 0]; return; }
+    const dx = Math.max(x1 - x0, box.r * 0.25), dy = Math.max(y1 - y0, box.r * 0.25);
+    C0 = [(x0 + x1) / 2, (y0 + y1) / 2];
+    S = Math.min((W - 90) / dx, (H - 90) / dy) * 0.86 * cam.zoom;
+  }
+  const V = () => Core.vec;
+  function flecha(p0, p1, col, lw, head) {
+    const a = proy(p0), b = proy(p1); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 1.5;
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    const ang = Math.atan2(b[1] - a[1], b[0] - a[0]), hs = head || 8;
+    ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - hs * Math.cos(ang - 0.4), b[1] - hs * Math.sin(ang - 0.4)); ctx.lineTo(b[0] - hs * Math.cos(ang + 0.4), b[1] - hs * Math.sin(ang + 0.4)); ctx.closePath(); ctx.fill();
+  }
+  function texto(t, p, col, dx, dy, bold) { const s = proy(p); ctx.fillStyle = col || "#1f2a36"; ctx.font = `${bold ? "600 " : ""}11.5px system-ui,Segoe UI,Arial`; ctx.fillText(t, s[0] + (dx || 0), s[1] + (dy || 0)); }
+  // rótulos que no se enciman: se descarta el que choque con uno ya dibujado
+  let ocupado = [];
+  function rotulo(t, p, col, bold, fondo) {
+    const s = proy(p); ctx.font = `${bold ? "600 " : ""}11.5px system-ui,Segoe UI,Arial`;
+    const w = ctx.measureText(t).width + 6, h = 15, x = s[0] + 4, y = s[1] - h - 2;
+    if (x < 0 || y < 0 || x + w > W || y + h > H) return false;
+    for (const r of ocupado) if (x < r[0] + r[2] && x + w > r[0] && y < r[1] + r[3] && y + h > r[1]) return false;
+    ocupado.push([x, y, w, h]);
+    if (fondo !== false) { ctx.fillStyle = "rgba(255,255,255,.82)"; ctx.fillRect(x, y, w, h); }
+    ctx.fillStyle = col || "#1f2a36"; ctx.fillText(t, x + 3, y + 11.5); return true;
+  }
+  function porProfundidad(lista, nodo) {
+    const d = (b) => { const A = nodo[b.i], B = nodo[b.j]; if (!A || !B) return 0; return (proy([+A.x, +A.y, +A.z])[2] + proy([+B.x, +B.y, +B.z])[2]) / 2; };
+    return lista.map((b) => [d(b), b]).sort((a, c) => c[0] - a[0]).map((t) => t[1]);
+  }
+  // ---------- filtro de vista: todo, un nivel o un marco ----------
+  const r6 = (v) => Math.round(+v * 1e6) / 1e6;
+  function opcionesVer() {
+    const s = $("sVer"), prev = s.value, ux = new Set(), uy = new Set(), uz = new Set();
+    M.nodes.forEach((n) => { ux.add(r6(n.x)); uy.add(r6(n.y)); uz.add(r6(n.z)); });
+    const o = [["todo", "Todo el modelo"]], ord = (st) => [...st].sort((a, b) => a - b);
+    if (uz.size > 1 && uz.size <= 400) ord(uz).forEach((v) => o.push(["z:" + v, `Nivel Z = ${v} m`]));
+    if (uy.size > 1 && uy.size <= 200) ord(uy).forEach((v) => o.push(["y:" + v, `Marco en Y = ${v} m (plano XZ)`]));
+    if (ux.size > 1 && ux.size <= 200) ord(ux).forEach((v) => o.push(["x:" + v, `Marco en X = ${v} m (plano YZ)`]));
+    s.textContent = ""; o.forEach(([v, l]) => { const e = document.createElement("option"); e.value = v; e.textContent = l; s.appendChild(e); });
+    s.value = o.some((t) => t[0] === prev) ? prev : "todo";
+  }
+  function filtroVer() {
+    const v = $("sVer").value; if (!v || v === "todo") return null;
+    const [eje, val] = [v[0], +v.slice(2)]; return (n) => n && Math.abs(r6(n[eje]) - val) < 1e-6;
+  }
+  // ---------- caché de geometría de diagramas y deformada (girar sin recalcular) ----------
+  let cache = { key: "", data: null }, versionRes = 0;
+  function dibujar() {
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    if (cv.width !== Math.round(r.width * dpr) || cv.height !== Math.round(r.height * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
+    W = r.width; H = r.height; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H); ocupado = [];
+    if (!M) return;
+    const nodo = {}; M.nodes.forEach((n) => (nodo[n.id] = n)); const P = (n) => [+n.x, +n.y, +n.z];
+    const fv = filtroVer();
+    const barsVis = fv ? M.bars.filter((b) => fv(nodo[b.i]) && fv(nodo[b.j])) : M.bars;
+    const visId = new Set(barsVis.map((b) => b.id));
+    const nodosVis = fv ? M.nodes.filter((n) => fv(n)) : M.nodes;
+    caja(nodosVis.length ? nodosVis : M.nodes); encuadre(nodosVis.length ? nodosVis : M.nodes);
+    const modo = $("sMostrar").value, esc_ = +$("rEsc").value, nb = barsVis.length;
+    const etiq = $("cEtiq").checked && nb <= 150;
+    const rb = {}; if (RES) RES.bars.forEach((b) => (rb[b.id] = b));
+    const rVis = RES ? barsVis.map((b) => rb[b.id]).filter(Boolean) : [];
+    // ejes globales (esquina inferior izquierda)
+    { const o2 = [42, H - 52], cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), ce = Math.cos(cam.el), se = Math.sin(cam.el);
+      [[[1, 0, 0], "X"], [[0, 1, 0], "Y"], [[0, 0, 1], "Z"]].forEach(([u, l]) => {
+        const xr = cy * u[0] - sy * u[1], yr = sy * u[0] + cy * u[1], up = u[2] * ce + yr * se, e = [o2[0] + 30 * xr, o2[1] - 30 * up];
+        if (Math.hypot(e[0] - o2[0], e[1] - o2[1]) < 3) { ctx.fillStyle = "#6b7b8b"; ctx.beginPath(); ctx.arc(o2[0], o2[1], 2.5, 0, 7); ctx.fill(); }
+        else { ctx.strokeStyle = ctx.fillStyle = "#6b7b8b"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(o2[0], o2[1]); ctx.lineTo(e[0], e[1]); ctx.stroke();
+          const an = Math.atan2(e[1] - o2[1], e[0] - o2[0]); ctx.beginPath(); ctx.moveTo(e[0], e[1]); ctx.lineTo(e[0] - 6 * Math.cos(an - 0.4), e[1] - 6 * Math.sin(an - 0.4)); ctx.lineTo(e[0] - 6 * Math.cos(an + 0.4), e[1] - 6 * Math.sin(an + 0.4)); ctx.fill(); }
+        ctx.font = "11px system-ui,Arial"; ctx.fillText(l, o2[0] + 39 * xr - 3, o2[1] - 39 * up + 4); }); }
+    const conResultado = RES && modo !== "modelo" && modo !== "dif";
+    // barras (de atrás hacia adelante)
+    const lw = nb > 1500 ? 1.2 : nb > 400 ? 2 : 3;
+    if (modo !== "dif") porProfundidad(barsVis, nodo).forEach((b) => {
+      const A = nodo[b.i], B = nodo[b.j]; if (!A || !B) return;
+      const a = proy(P(A)), c = proy(P(B)); const sel = picked && b.id === selBar;
+      ctx.strokeStyle = sel ? "#e67e22" : conResultado ? "#aab4be" : "#2b3a4a"; ctx.lineWidth = sel ? lw + 1.5 : lw; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); ctx.stroke();
+    });
+    // ejes locales
+    if ($("cEjes").checked && RES) rVis.slice(0, 400).forEach((b) => {
+      const A = nodo[b.i]; const m = V().add(P(A), V().scl(b.ux, b.L * 0.6)), s = Math.min(b.L * 0.25, box.r * 0.18);
+      [[b.ux, "#c0392b", "x'"], [b.uy, "#1e8449", "y'"], [b.uz, "#1f5fa8", "z'"]].forEach(([u, col, l]) => { const e = V().add(m, V().scl(u, s)); flecha(m, e, col, 1.6, 7); if (nb <= 60) texto(l, V().add(m, V().scl(u, s * 1.2)), col, -4, 4, true); });
+    });
+    const muestras = nb > 1500 ? 6 : nb > 400 ? 12 : 30;
+    const ligero = !!(drag && drag.moved && nb > 1500);   // mientras se arrastra un modelo grande: solo contornos
+    const keyBase = `${versionRes}|${$("sVer").value}|${esc_}|${muestras}`;
+    // deformada
+    if (modo === "def" && RES) {
+      const E = +M.material.E, U = uD();
+      if (cache.key !== "def|" + keyBase) {
+        let dm = 0; rVis.forEach((b) => { for (let k = 0; k <= 4; k++) dm = Math.max(dm, V().norm(Core.desplazamiento(b, k / 4, E))); });
+        const sc = dm > 0 ? 0.12 * box.r / dm * esc_ : 0;
+        cache = { key: "def|" + keyBase, data: { dm, sc, lineas: rVis.map((b) => { const A = P(nodo[b.i]), pts = [];
+          for (let k = 0; k <= muestras; k++) { const s = k / muestras; pts.push(V().add(V().add(A, V().scl(b.ux, b.L * s)), V().scl(Core.desplazamiento(b, s, E), sc))); } return pts; }) } };
+      }
+      const D = cache.data; ctx.strokeStyle = "#c0392b"; ctx.lineWidth = nb > 400 ? 1.4 : 2.4;
+      D.lineas.forEach((pts) => { ctx.beginPath(); pts.forEach((p, k) => { const q = proy(p); k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.stroke(); });
+      $("legend").innerHTML = `Deformada amplificada ×${f(D.sc, 3)} · desplazamiento máximo ${U.real ? f(D.dm * 1000, 2) + " mm" : f(D.dm) + " (unidades de 1/E)"}`;
+    }
+    // diagramas
+    const idx = { N: 0, Vy: 1, Vz: 2, T: 3, My: 4, Mz: 5 }[modo];
+    if (idx != null && RES) {
+      const off = { N: "uz", Vy: "uy", Vz: "uz", T: "uy", My: "uz", Mz: "uy" }[modo];
+      if (cache.key !== modo + "|" + keyBase) {
+        let vm = 0; rVis.forEach((b) => (vm = Math.max(vm, Math.abs(Core.maxAbs(b, idx).v))));
+        const sc = vm > 1e-12 ? 0.16 * box.r / vm * esc_ : 0;
+        const tramos = rVis.map((b) => {
+          const A = P(nodo[b.i]), u = b[off], xs = []; for (let k = 0; k <= muestras; k++) xs.push(b.L * k / muestras);
+          const x0 = Core.raizInterior(b, idx); if (x0 != null) { xs.push(x0); xs.sort((a, c) => a - c); }
+          const pts = xs.map((x) => { const v = Core.interno(b, x)[idx], p0 = V().add(A, V().scl(b.ux, x)); return { p0, p: V().add(p0, V().scl(u, v * sc)), v, x }; });
+          return { b, pts, ext: Core.extremos(b, idx).map((e) => ({ ...e, p: V().add(V().add(A, V().scl(b.ux, e.x)), V().scl(u, e.v * sc)) })) };
+        });
+        cache = { key: modo + "|" + keyBase, data: { vm, sc, tramos } };
+      }
+      // por barra: un trazo para los tramos positivos, otro para los negativos y uno para el contorno
+      const D = cache.data, orden = {}; porProfundidad(D.tramos.map((t) => t.b), nodo).forEach((b, k) => (orden[b.id] = k));
+      ctx.strokeStyle = "#34495e"; ctx.lineWidth = nb > 400 ? 0.9 : 1.3;
+      [...D.tramos].sort((a, c) => orden[a.b.id] - orden[c.b.id]).forEach(({ pts }) => {
+        const q = pts.map((p) => [proy(p.p0), proy(p.p)]);
+        if (!ligero) for (const signo of [1, -1]) {
+          ctx.beginPath(); let hay = false;
+          for (let k = 0; k < pts.length - 1; k++) { if (((pts[k].v + pts[k + 1].v) >= 0 ? 1 : -1) !== signo) continue; hay = true;
+            ctx.moveTo(q[k][0][0], q[k][0][1]); ctx.lineTo(q[k][1][0], q[k][1][1]); ctx.lineTo(q[k + 1][1][0], q[k + 1][1][1]); ctx.lineTo(q[k + 1][0][0], q[k + 1][0][1]); ctx.closePath(); }
+          if (hay) { ctx.fillStyle = signo > 0 ? "rgba(41,128,185,.30)" : "rgba(192,57,43,.30)"; ctx.fill(); }
+        }
+        ctx.beginPath(); q.forEach((s, k) => (k ? ctx.lineTo(s[1][0], s[1][1]) : ctx.moveTo(s[1][0], s[1][1]))); ctx.stroke();
+      });
+      if ($("cValores").checked && !ligero) {
+        // candidatos: extremos A, B e interiores; primero el máximo absoluto, luego por magnitud; sin encimarse
+        const cand = []; D.tramos.forEach((t) => t.ext.forEach((e) => { if (Math.abs(e.v) > 1e-9 * Math.max(D.vm, 1e-30)) cand.push({ ...e, id: t.b.id }); }));
+        cand.sort((a, c) => Math.abs(c.v) - Math.abs(a.v));
+        const tope = nb <= 40 ? cand.length : 40; let k = 0;
+        for (const e of cand) { if (k >= tope) break;
+          const txt = k === 0 ? `máx ${f(e.v, 3)} (barra ${e.id}${e.interior ? `, x' = ${f(e.x, 3)}` : ""})` : (e.interior ? `${f(e.v, 3)} (x' = ${f(e.x, 3)})` : f(e.v, 3));
+          if (rotulo(txt, e.p, "#1f2a36", k === 0)) k++; }
+      }
+      const nom = { N: "Normal N [t] (+ tensión)", Vy: "Cortante Vy' [t]", Vz: "Cortante Vz' [t]", T: "Torsión T [t·m]", My: "Momento My' [t·m] (dibujado en z')", Mz: "Momento Mz' [t·m] (dibujado en y')" }[modo];
+      $("legend").innerHTML = `${nom} · azul = positivo, rojo = negativo (hacia +${off === "uy" ? "y'" : "z'"}) · máx. |valor| ${fv ? "en la vista" : ""} = ${f(D.vm, 3)}${nb > 40 && $("cValores").checked ? " · se rotulan los 40 valores mayores que caben" : ""}`;
+    }
+    if (modo === "dif") {
+      if (!CMP) { renderSAP(); }
+      if (!CMP) $("legend").innerHTML = "Carga resultados de SAP2000 en la pestaña «Comprobación SAP2000» para ver aquí las diferencias por barra.";
+      else {
+        const tol = TOL(), colorDe = (e) => { if (e == null) return "#d5dbe1"; if (e <= tol) return "#2e9e5b"; const t = Math.min(1, Math.log10(e / tol) / 1); return `rgb(${Math.round(240 - 30 * t)},${Math.round(196 - 150 * t)},${Math.round(40 + 0 * t)})`; };
+        porProfundidad(barsVis, nodo).forEach((b) => { const A = nodo[b.i], B = nodo[b.j]; if (!A || !B) return; const a = proy(P(A)), c = proy(P(B)), e = CMP.porBarra[b.id];
+          ctx.strokeStyle = colorDe(e); ctx.lineWidth = lw + (e != null && e > tol ? 1.5 : 0); ctx.setLineDash(e == null ? [4, 4] : []); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(c[0], c[1]); ctx.stroke(); });
+        ctx.setLineDash([]);
+        let peor = null; barsVis.forEach((b) => { const e = CMP.porBarra[b.id]; if (e != null && (!peor || e > peor.e)) peor = { b, e }; });
+        if (peor && peor.e > tol) { const A = nodo[peor.b.i], B = nodo[peor.b.j]; rotulo(`máx ${(peor.e * 100).toFixed(3)} % (barra ${peor.b.id})`, V().scl(V().add(P(A), P(B)), 0.5), "#b03a2e", true); }
+        const n = barsVis.filter((b) => CMP.porBarra[b.id] != null).length, malas = barsVis.filter((b) => CMP.porBarra[b.id] > tol).length;
+        $("legend").innerHTML = `Diferencia con SAP2000 por barra (fuerzas internas): <b style="color:#2e9e5b">verde ≤ ${(tol * 100).toFixed(3)} %</b> · amarillo → rojo hasta 10 veces la tolerancia · gris punteado = sin datos de SAP · ${malas} de ${n} barras fuera de tolerancia`;
+      }
+    }
+    if (modo === "modelo" || !RES) $("legend").innerHTML = RES ? `${fv ? `Vista: ${esc($("sVer").selectedOptions[0].textContent)} · ` : ""}Arrastra para girar · rueda para acercar · Shift + arrastrar (o botón derecho) para desplazar · clic en una barra para seleccionarla` : "";
+    // cargas
+    if ($("cCargas").checked && modo === "modelo") {
+      const nl = M.nodeLoads.filter((l) => !fv || fv(nodo[l.node])), bl = M.barLoads.filter((l) => visId.has(l.bar));
+      let fm = 0; nl.forEach((l) => (fm = Math.max(fm, Math.hypot(l.F[0], l.F[1], l.F[2]))));
+      const rotular = nl.length + bl.length <= 60;
+      nl.forEach((l) => { const n = nodo[l.node]; if (!n) return; const F = l.F.slice(0, 3); const mag = Math.hypot(...F); if (mag < 1e-12) return;
+        const len = box.r * 0.3 * (0.5 + 0.5 * mag / fm), u = V().scl(F, 1 / mag), p1 = P(n), p0 = V().sub(p1, V().scl(u, len));
+        flecha(p0, p1, "#d35400", nl.length > 100 ? 1.2 : 2.4, nl.length > 100 ? 6 : 10); if (rotular) rotulo(`${f(mag, 2)} t`, p0, "#d35400", true); });
+      bl.forEach((l) => { const b = rb[l.bar]; if (!b) return;
+        const dir = l.dir[0] === "G" ? [l.dir === "GX" ? 1 : 0, l.dir === "GY" ? 1 : 0, l.dir === "GZ" ? 1 : 0] : (l.dir === "LX" ? b.ux : l.dir === "LY" ? b.uy : b.uz);
+        const s = Math.sign(+l.w) || 1, len = Math.min(box.r * 0.16, b.L * 0.4), A = P(nodo[b.i]), nf = bl.length > 200 ? 3 : 7;
+        for (let k = 1; k <= nf; k++) { const p1 = V().add(A, V().scl(b.ux, b.L * k / (nf + 1))); flecha(V().sub(p1, V().scl(dir, s * len)), p1, "#7d3c98", 1, 5); }
+        if (rotular) rotulo(`w = ${f(Math.abs(+l.w), 2)} t/m`, V().sub(V().add(A, V().scl(b.ux, b.L / 2)), V().scl(dir, s * len * 1.2)), "#7d3c98", true); });
+    }
+    // articulaciones: círculo blanco junto al extremo liberado (relleno parcial si solo es torsión)
+    const conLibVis = barsVis.filter((b) => b.libA || b.libB);
+    if (conLibVis.length <= 120) conLibVis.forEach((b) => { const A = nodo[b.i], B = nodo[b.j]; if (!A || !B) return;
+      const a = proy(P(A)), c = proy(P(B)), dx = c[0] - a[0], dy = c[1] - a[1], Ls = Math.hypot(dx, dy); if (Ls < 24) return;
+      [[b.libA, a, 1], [b.libB, c, -1]].forEach(([t, p0, sg]) => { let L = []; try { L = Core.leerLib(t); } catch (e) { return; } if (!L.length) return;
+        const x = p0[0] + sg * dx / Ls * 10, y = p0[1] + sg * dy / Ls * 10;
+        ctx.beginPath(); ctx.arc(x, y, 4.2, 0, 7); ctx.fillStyle = L.some((k) => k !== "T") ? "#fff" : "#f5cba7"; ctx.fill();
+        ctx.strokeStyle = "#1f2a36"; ctx.lineWidth = 1.4; ctx.stroke(); }); });
+    // nudos, apoyos y etiquetas
+    const rp = nb > 400 ? 1.8 : 3.2;
+    nodosVis.forEach((n) => {
+      const s = proy(P(n)); const fx = n.r.filter(Boolean).length;
+      if (fx) { ctx.fillStyle = fx === 6 ? "#5d6d7e" : "#a9b4bf"; ctx.strokeStyle = "#2b3a4a"; ctx.lineWidth = 1;
+        if (fx === 6) { ctx.fillRect(s[0] - 6, s[1], 12, 6); ctx.strokeRect(s[0] - 6, s[1], 12, 6); }
+        else { ctx.beginPath(); ctx.moveTo(s[0], s[1]); ctx.lineTo(s[0] - 6, s[1] + 9); ctx.lineTo(s[0] + 6, s[1] + 9); ctx.closePath(); ctx.fill(); ctx.stroke(); } }
+      ctx.fillStyle = "#1f2a36"; ctx.beginPath(); ctx.arc(s[0], s[1], rp, 0, 7); ctx.fill();
+    });
+    if (etiq && !conResultado) {
+      barsVis.forEach((b) => { const A = nodo[b.i], B = nodo[b.j]; if (A && B) rotulo(b.id, V().scl(V().add(P(A), P(B)), 0.5), "#1f2a36", true); });
+      nodosVis.forEach((n) => rotulo(n.id, P(n), "#7a5b00", true, false));
+    }
+  }
+  // interacción
+  let drag = null;
+  cv.addEventListener("contextmenu", (e) => e.preventDefault());
+  cv.addEventListener("mousedown", (e) => { drag = { x: e.clientX, y: e.clientY, pan: e.shiftKey || e.button === 2, moved: false }; cv.style.cursor = "grabbing"; });
+  window.addEventListener("mouseup", (e) => {
+    const movio = drag && drag.moved;
+    if (drag && !drag.moved && e.target === cv) seleccionar(e);
+    drag = null; cv.style.cursor = "grab"; if (movio) pedirDibujo();
+  });
+  let raf = 0; const pedirDibujo = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; dibujar(); }); };
+  window.addEventListener("mousemove", (e) => {
+    if (!drag) { hover(e); return; }
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
+    if (drag.pan) { cam.px += dx; cam.py += dy; } else { cam.yaw += dx * 0.008; cam.el = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cam.el + dy * 0.008)); }
+    drag.x = e.clientX; drag.y = e.clientY; pedirDibujo();
+  });
+  cv.addEventListener("wheel", (e) => { e.preventDefault(); cam.zoom *= Math.exp(-e.deltaY * 0.0012); pedirDibujo(); }, { passive: false });
+  // táctil
+  let t0 = null;
+  cv.addEventListener("touchstart", (e) => { t0 = [...e.touches].map((t) => [t.clientX, t.clientY]); }, { passive: true });
+  cv.addEventListener("touchmove", (e) => { e.preventDefault(); const t = [...e.touches].map((x) => [x.clientX, x.clientY]);
+    if (t.length === 1 && t0 && t0.length === 1) { cam.yaw += (t[0][0] - t0[0][0]) * 0.008; cam.el = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cam.el + (t[0][1] - t0[0][1]) * 0.008)); }
+    else if (t.length === 2 && t0 && t0.length === 2) { const d1 = Math.hypot(t[0][0] - t[1][0], t[0][1] - t[1][1]), d0 = Math.hypot(t0[0][0] - t0[1][0], t0[0][1] - t0[1][1]); if (d0 > 0) cam.zoom *= d1 / d0; }
+    t0 = t; pedirDibujo(); }, { passive: false });
+  function barraCercana(e) {
+    if (!M) return null; const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    const nodo = {}; M.nodes.forEach((n) => (nodo[n.id] = n)); let best = null, bd = 9; const fv = filtroVer();
+    M.bars.forEach((b) => { const A = nodo[b.i], B = nodo[b.j]; if (!A || !B || (fv && !(fv(A) && fv(B)))) return; const a = proy([+A.x, +A.y, +A.z]), c = proy([+B.x, +B.y, +B.z]);
+      const vx = c[0] - a[0], vy = c[1] - a[1], L2 = vx * vx + vy * vy || 1, t = Math.max(0, Math.min(1, ((mx - a[0]) * vx + (my - a[1]) * vy) / L2));
+      const d = Math.hypot(mx - a[0] - t * vx, my - a[1] - t * vy); if (d < bd) { bd = d; best = { b, t, mx, my }; } });
+    return best;
+  }
+  function seleccionar(e) { const h = barraCercana(e); if (!h) return; selBar = h.b.id; picked = true; dibujar(); renderPaso(); irTab("resTabs", "rPaso"); }
+  function hover(e) {
+    const tip = $("tip"); if (e.target !== cv || !RES) { tip.style.display = "none"; return; }
+    const h = barraCercana(e); if (!h) { tip.style.display = "none"; return; }
+    const b = RES.bars.find((x) => x.id === h.b.id); if (!b) return;
+    const v = Core.interno(b, h.t * b.L);
+    tip.textContent = `Barra ${b.id}  x' = ${f(h.t * b.L, 3)} m\nN = ${f(v[0], 3)}   T = ${f(v[3], 3)}\nVy' = ${f(v[1], 3)}   Vz' = ${f(v[2], 3)}\nMy' = ${f(v[4], 3)}   Mz' = ${f(v[5], 3)}`;
+    tip.style.left = h.mx + 14 + "px"; tip.style.top = h.my + 10 + "px"; tip.style.display = "block";
+  }
+  window.addEventListener("resize", dibujar);
+  if (window.ResizeObserver) new ResizeObserver(() => pedirDibujo()).observe($("viewer"));
+
+  // ---------- CSV ----------
+  function csv() {
+    if (!RES) { status("No hay resultados que exportar: corrige el modelo primero.", true); return; }
+    const L = [], R = RES, cq = (v) => (typeof v === "number" ? String(v) : `"${String(v).replace(/"/g, '""')}"`);
+    const row = (arr) => arr.map(cq).join(",");
+    L.push(+M.material.E >= 1000 ? "DESPLAZAMIENTOS (m, rad)" : `DESPLAZAMIENTOS (unidades de 1/E: divida entre el E real; E del modelo = ${M.material.E})`); L.push("Nudo,dX,dY,dZ,phiX,phiY,phiZ");
+    M.nodes.forEach((n) => L.push(row([n.id, ...R.map[n.id].map((g) => (g == null ? 0 : R.d[g]))])));
+    L.push("", "REACCIONES (t, t·m)", "Apoyo,RX,RY,RZ,MX,MY,MZ"); Object.entries(R.reac).forEach(([id, v]) => L.push(row([id, ...v])));
+    L.push("", "FUERZAS EN EXTREMOS (ejes locales; sobre la barra)", "Barra,A,B,L," + ["FxA", "FyA", "FzA", "MxA", "MyA", "MzA", "FxB", "FyB", "FzB", "MxB", "MyB", "MzB"].join(","));
+    R.bars.forEach((b) => L.push(row([b.id, b.i, b.j, b.L, ...b.f])));
+    L.push("", "FUERZAS INTERNAS (cara positiva)", "Barra,x,N,Vy,Vz,T,My,Mz");
+    R.bars.forEach((b) => { const xs = []; for (let k = 0; k <= 10; k++) xs.push(b.L * k / 10); [4, 5].forEach((ix) => { const x0 = Core.raizInterior(b, ix); if (x0 != null) xs.push(x0); });
+      xs.sort((a, c) => a - c).forEach((x) => L.push(row([b.id, x, ...Core.interno(b, x)]))); });
+    if (R.K) { L.push("", "MATRIZ DE RIGIDEZ [K]"); R.K.forEach((r) => L.push(r.join(","))); }
+    else L.push("", `MATRIZ DE RIGIDEZ [K]: no se exporta completa (${R.n} x ${R.n}); ancho de banda ${R.perfil.banda}`);
+    descargar("Marco3D_resultados.csv", "\uFEFF" + L.join("\r\n"), "text/csv");
+  }
+
+  // ---------- inicio ----------
+  function cargarModelo(m) {
+    if (!m || !Array.isArray(m.nodes) || !Array.isArray(m.bars)) throw new Error("El archivo no es un modelo de Marco3D");
+    m.material = m.material || { E: 1, G: 0.4 }; m.sections = m.sections || []; m.nodeLoads = m.nodeLoads || []; m.barLoads = m.barLoads || [];
+    const S_ = (v) => (v == null ? "" : String(v).trim());
+    m.nodes.forEach((n) => { n.id = S_(n.id); if (!Array.isArray(n.r)) n.r = [0, 0, 0, 0, 0, 0]; n.r = [0, 1, 2, 3, 4, 5].map((k) => (n.r[k] ? 1 : 0)); });
+    m.bars.forEach((b) => { b.id = S_(b.id); b.i = S_(b.i); b.j = S_(b.j); b.sec = S_(b.sec); });
+    m.sections.forEach((x) => (x.id = S_(x.id)));
+    m.nodeLoads.forEach((l) => { l.node = S_(l.node); if (!Array.isArray(l.F)) l.F = [0, 0, 0, 0, 0, 0]; });
+    m.barLoads.forEach((l) => (l.bar = S_(l.bar)));
+    M = m; RES = null; selBar = null; renderSide(); guardarLocal(); calcular(); vista("3d"); marcarEjemplo();
+  }
+  tabs("sideTabs"); tabs("resTabs");
+  $("vtool").querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => vista(b.dataset.v)));
+  $("sVer").addEventListener("change", () => { const v = $("sVer").value[0]; vista(v === "y" ? "xz" : v === "x" ? "yz" : v === "z" ? "xy" : "3d"); });
+  ["sMostrar", "rEsc", "cEtiq", "cEjes", "cCargas", "cValores"].forEach((id) => $(id).addEventListener("input", dibujar));
+  $("bTarea").onclick = () => cargarModelo(Modelos.tarea());
+  // ---------- ejemplos de edificios idealizados ----------
+  (function () {
+    const menu = $("mEjemplos");
+    menu.innerHTML = `<button data-ej="tarea">Ejercicio de la tarea (12 GDL)</button><div class="sep"></div><div class="hint">Edificios idealizados como marcos 3D (didácticos)</div>`
+      + Ejemplos.lista.map((e) => `<button data-ej="${e.id}">${esc(e.titulo)}</button>`).join("");
+    $("bEjemplos").onclick = (ev) => { ev.stopPropagation(); menu.hidden = !menu.hidden; };
+    document.addEventListener("click", (ev) => { if (!menu.hidden && !menu.contains(ev.target)) menu.hidden = true; });
+    menu.onclick = (ev) => { const b = ev.target.closest("[data-ej]"); if (!b) return; menu.hidden = true;
+      if (b.dataset.ej === "tarea") cargarModelo(Modelos.tarea()); else fichaEjemplo(b.dataset.ej, true); };
+    $("badge").onclick = () => { if (M && M.ejemplo) fichaEjemplo(M.ejemplo.id, false); };
+    document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && !$("modal").hidden) cerrarModal(); });
+  })();
+  function cerrarModal() { $("modal").hidden = true; }
+  // aviso que hay que aceptar antes de cargar un ejemplo (o solo informativo desde la etiqueta del visor)
+  function fichaEjemplo(id, cargar) {
+    const e = Ejemplos.porId(id); if (!e) return;
+    const li = (arr) => `<ul>${arr.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
+    const caja = $("modal").querySelector(".caja");
+    caja.innerHTML = `<div class="etq">Modelo idealizado como marco 3D · ejemplo didáctico</div><h2>${esc(e.titulo)}</h2>
+      <h4>Datos públicos del edificio</h4>${li(e.datos)}
+      <h4>Cómo se idealizó</h4>${li(e.modelo)}
+      <div class="sup"><b>Supuestos:</b> ${esc(e.supuestos)}</div>
+      <h4>Limitaciones de cualquier modelo de este programa</h4>${li(Ejemplos.limitaciones)}
+      <p><b>Este modelo no representa la estructura real ni sirve para evaluar su seguridad.</b> Sirve para estudiar cómo se idealiza un sistema estructural como marco 3D y cómo responde.</p>
+      <h4>Fuentes</h4><ul>${e.fuentes.map((f) => `<li><a href="${esc(f.u)}" target="_blank" rel="noopener noreferrer">${esc(f.t)}</a></li>`).join("")}</ul>
+      <div class="pie">Método de análisis: matriz de continuidad con la ley de Hooke de J. Damy, como se enseña en el curso del M.I. Octavio García Domínguez (DEPFI, UNAM). Sin logotipos ni fotografías de los edificios.</div>
+      ${cargar ? `<label class="ok"><input type="checkbox" id="cAcepto"> Entiendo que es un modelo idealizado con fines didácticos.</label>` : ""}
+      <div class="acciones">${cargar ? `<button id="mCancel">Cancelar</button><button class="pri" id="mCargar" disabled>Cargar el modelo</button>` : `<button class="pri" id="mCancel">Cerrar</button>`}</div>`;
+    $("modal").hidden = false;
+    $("mCancel").onclick = cerrarModal;
+    $("modal").onclick = (ev) => { if (ev.target === $("modal")) cerrarModal(); };
+    if (cargar) {
+      $("cAcepto").onchange = () => ($("mCargar").disabled = !$("cAcepto").checked);
+      $("mCargar").onclick = () => { cerrarModal(); status(`Generando ${e.titulo}…`, false);
+        setTimeout(() => { try { cargarModelo(e.crear()); } catch (er) { status(er.message, true); } }, 20); };
+      $("cAcepto").focus({ preventScroll: true });
+    } else $("mCancel").focus({ preventScroll: true });
+    caja.scrollTop = 0;
+  }
+  function marcarEjemplo() {
+    const b = $("badge"); if (!b) return;
+    if (M && M.ejemplo) { b.hidden = false; b.textContent = `Modelo idealizado · ${M.ejemplo.titulo} · no representa la estructura real (ver supuestos)`; }
+    else b.hidden = true;
+  }
+  $("bGuardar").onclick = () => descargar("Marco3D_modelo.json", JSON.stringify(M, null, 1), "application/json");
+  $("bAbrir").onclick = () => $("fAbrir").click();
+  $("fAbrir").onchange = (e) => { const fl = e.target.files[0]; if (!fl) return; const rd = new FileReader();
+    rd.onload = () => { try { cargarModelo(JSON.parse(rd.result)); } catch (err) { status("No se pudo abrir: " + err.message, true); } }; rd.readAsText(fl); e.target.value = ""; };
+  $("bS2K").onclick = () => { try { descargar("Marco3D_modelo.s2k", S2K.exportar(M)); status("Archivo .s2k exportado: impórtalo en SAP2000 con File → Import → SAP2000 .s2k Text File", false); } catch (err) { status("No se exportó: " + err.message, true); } };
+  $("bCSV").onclick = csv;
+  $("fSAP").onchange = (e) => { cargarSAP(e.target.files); e.target.value = ""; };
+  $("bAmpliar").onclick = () => { const r = $("results"); r.classList.toggle("amplio"); $("bAmpliar").textContent = r.classList.contains("amplio") ? "⤓ Reducir" : "⤢ Ampliar"; setTimeout(dibujar, 30); };
+  const guardado = cargarLocal();
+  try { cargarModelo(guardado || Modelos.tarea()); } catch (e) { cargarModelo(Modelos.tarea()); }
+  window.Marco3D = { get modelo() { return M; }, get resultados() { return RES; }, cargarModelo, vista, girar: (a) => { cam.yaw += a; dibujar(); } };
+})();
+</script>
+</body>
+</html>
